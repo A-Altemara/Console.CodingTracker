@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodingTracker.A-Altemara", "CodingTracker.A-Altemara\CodingTracker.A-Altemara.csproj", "{5B7B43EF-57BF-4F1A-BB64-82612D850953}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodingTracker", "CodingTracker\CodingTracker.csproj", "{5B7B43EF-57BF-4F1A-BB64-82612D850953}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

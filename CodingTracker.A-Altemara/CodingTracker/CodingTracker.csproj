@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <RootNamespace>CodingTracker.A_Altemara</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.0-preview.7.24405.7" />
+      <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="System.Configuration">
+        <HintPath>..\..\..\..\..\..\Downloads\dotnet-sdk-6.0.423-osx-x64\packs\Microsoft.NETCore.App.Ref\6.0.31\ref\net6.0\System.Configuration.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+</Project>
