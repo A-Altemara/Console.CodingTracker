@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Configuration;
+
 
 namespace CodingTracker.A_Altemara;
 
@@ -7,45 +9,70 @@ public static class Program
     static void Main(string[] args)
     {
         var continueProgram = true;
-
-        CodingDb.DatabaseConnectionImplementation();
-
-        Console.WriteLine("Hello, World!");
-
-        SpectreTest.RunSpectre();
         
+        var connectionStringSettings = ConfigurationManager.ConnectionStrings["DefaultConnection"];
+        var defaultConnection = connectionStringSettings.ConnectionString;
+        Console.WriteLine(defaultConnection);
+
+        var codingDb = new CodingDb(defaultConnection);
+        
+        // SpectreTest.RunSpectre();
+
         while (continueProgram)
         {
-            Menu.DisplayMenu();
-            int selection =SelectOption();
-            switch(selection)
+            string selection = Menu.DisplayMenu();
+            switch (selection)
             {
-                case 0:
+                case "Exit Program":
                     continueProgram = false;
                     Console.WriteLine("Exiting Program");
                     break;
-                case 1:
+                case "Add New":
                     // selects option to enter new CodingSession
-                    Console.WriteLine("Enter New Coding Session");
+                    Console.WriteLine("Enter New Coding Session,  press enter to continue");
+                    Console.ReadLine();
                     break;
-                case 2:
+                case "Edit Existing":
                     // Selects option to edit existing CodingSession
-                    Console.WriteLine("Editing am existing Coding Session");
-                break;
+                    Console.WriteLine("Editing am existing Coding Session, press enter to continue");
+                    Console.ReadLine();
+                    break;
+                case "View all Sessions":
+                    ViewRecords(codingDb);
+                    break;
                 default:
                     Console.WriteLine("Invalid selection press Enter to try again");
                     Console.ReadLine();
                     break;
-                    
             }
         }
+    }
 
+    private static void DeleteEntry(CodingDb codingDb)
+    {
+        var codingSessions = ViewRecords(codingDb);
+        var codingSessionId = Menu.GetValidHabitId(codingSessions);
+        if (codingSessionId is null)
+        {
+            return;
+        }
+
+        if (codingDb.DeleteSession(codingSessionId))
+        {
+            Console.WriteLine("Record deleted successfully, press any key to continue");
+        }
+        else
+        {
+            Console.WriteLine("Failed to delete record, press any key to continue");
+        }
+
+        Console.ReadKey();
     }
     
-    private static int SelectOption()
+    private static List<CodingSession> ViewRecords(CodingDb codingDb)
     {
-        
-        Console.WriteLine("catch option");
-        return 0;
+        var sessions = codingDb.GetAllRecords();
+        Menu.DisplayAllRecords(sessions);
+        return sessions;
     }
 }

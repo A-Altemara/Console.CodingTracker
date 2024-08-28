@@ -1,23 +1,22 @@
-using System.Configuration;
 using System.Data;
 using System.Data.SQLite;
+using System.Globalization;
+using Dapper;
 
 namespace CodingTracker.A_Altemara;
 
-public static class CodingDb
+public class CodingDb
 {
     private static readonly Random Random = new Random();
-
-    public static void DatabaseConnectionImplementation()
+    private readonly SQLiteConnection _dbConnection;
+    public CodingDb(string connectionString)
     {
-        var connectionStringSettings = ConfigurationManager.ConnectionStrings["DefaultConnection"];
-        var defaultConnection = connectionStringSettings.ConnectionString;
-        Console.WriteLine(defaultConnection);
+        Dapper.SqlMapper.AddTypeHandler(new TimeSpanHandler());
+        
+        _dbConnection = new SQLiteConnection(connectionString);
 
-        using var connection = new SQLiteConnection(defaultConnection);
-
-        connection.Open();
-        if (connection.State != ConnectionState.Open)
+        _dbConnection.Open();
+        if (_dbConnection.State != ConnectionState.Open)
         {
             Console.WriteLine("Failed to connect to the database.");
             return;
@@ -28,7 +27,7 @@ public static class CodingDb
         string checkTableQuery = "SELECT name FROM sqlite_master WHERE type='table' AND name='CodeTrackerTable';";
         var tableExists = false;
 
-        using (SQLiteCommand command = new(checkTableQuery, connection))
+        using (SQLiteCommand command = new(checkTableQuery, _dbConnection))
         {
             using (SQLiteDataReader reader = command.ExecuteReader())
             {
@@ -42,33 +41,38 @@ public static class CodingDb
         {
             string createTableQuery = "CREATE TABLE CodeTrackerTable " +
                                       "(Id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                                      "StartDate TEXT NOT NULL , " +
-                                      "EndDate TEXT NOT NULL, " +
+                                      "StartTime TEXT NOT NULL , " +
+                                      "EndTime TEXT NOT NULL, " +
                                       "Duration TEXT);";
 
-            using (SQLiteCommand command = new SQLiteCommand(createTableQuery, connection))
+            using (SQLiteCommand command = new (createTableQuery, _dbConnection))
             {
                 command.ExecuteNonQuery();
             }
 
-            CreateAndPopulateData(connection);
+            CreateAndPopulateData();
         }
         
-        connection.Close();
         Console.WriteLine("Connection Closed");
     }
+    
+    public void CloseConnection()
+    {
+        _dbConnection.Close();
+    }
 
-    public static void CreateAndPopulateData(SQLiteConnection connection)
+    private void CreateAndPopulateData()
     {
         List<CodingSession> prepopulatedData = new();
+        string insertQuery = "INSERT INTO CodeTrackerTable (StartTime, EndTime, Duration) VALUES (@StartTime, @EndTime, @Duration);";
         int counter = 10;
-        while (counter > 0)
+        while (counter > 0)        
+
         {
-            DateTime randomStart =
+            var randomStart =
                 GenerateRandomStartDateTime(new DateTime(2022, 1, 1), new DateTime(2024, 7, 31));
-            DateTime randomEnd = GenerateRandomEndDateTime(randomStart, 1);
-            TimeSpan duration = CalculateDuration(randomStart, randomEnd);
-            // Create a Coding object and add it to the list
+            var randomEnd = GenerateRandomEndDateTime(randomStart, 0);
+            var duration = CalculateDuration(randomStart, randomEnd);
             var entry = new CodingSession
             {
                 StartTime = randomStart,
@@ -77,23 +81,21 @@ public static class CodingDb
             };
             prepopulatedData.Add(entry);
             counter--;
-        }
+            _dbConnection.Execute(insertQuery, entry);
+        }       
 
-        foreach (var entry in prepopulatedData)
-        {
-            string insertQuery = "INSERT INTO CodeTrackerTable (StartDate, EndDate, Duration) " +
-                                 "VALUES (@startdate, @enddate, @duration);";
 
-            using SQLiteCommand command = new SQLiteCommand(insertQuery, connection);
-            command.Parameters.AddWithValue("@startdate", entry.StartTime.ToString("yyyy-mm-dd HH:mm:ss"));
-            command.Parameters.AddWithValue("@enddate", entry.EndTime.ToString("yyyy-mm-dd HH:mm:ss"));
-            command.Parameters.AddWithValue("@duration", entry.Duration);
-
-            command.ExecuteNonQuery();
-        }
+        // Use Dapper to bulk insert data
+    }
+    
+    public List<CodingSession> GetAllRecords()
+    {
+        var sessions =
+            _dbConnection.Query<CodingSession>("SELECT Id, StartTime, EndTime, Duration FROM CodeTrackerTable").ToList();
+        return sessions;
     }
 
-    public static DateTime GenerateRandomStartDateTime(DateTime startDate, DateTime endDate)
+    private static DateTime GenerateRandomStartDateTime(DateTime startDate, DateTime endDate)
     {
         // Calculate the total number of seconds between the start and end dates
         long totalSeconds = (long)(endDate - startDate).TotalSeconds;
@@ -105,7 +107,7 @@ public static class CodingDb
         return startDate.AddSeconds(randomSeconds);
     }
 
-    public static DateTime GenerateRandomEndDateTime(DateTime startDate, int maxDays)
+    private static DateTime GenerateRandomEndDateTime(DateTime startDate, int maxDays)
     {
         // Generate a random number of days between 0 and maxDays (inclusive)
         int randomDays = Random.Next(0, maxDays + 1);
@@ -125,8 +127,41 @@ public static class CodingDb
         return randomEndDate;
     }
     
+    public bool DeleteSession(string id)
+    {
+        string deleteQuery = "DELETE FROM CodeTrackerTable WHERE Id = @id;";
+
+        using SQLiteCommand command = new(deleteQuery, _dbConnection);
+        command.Parameters.AddWithValue("@id", id);
+
+        try
+        {
+            command.ExecuteNonQuery();
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+    
     public static TimeSpan CalculateDuration(DateTime startTime, DateTime endTime)
     {
         return endTime - startTime;
+    }
+}
+
+public class TimeSpanHandler : SqlMapper.TypeHandler<TimeSpan>
+{
+    public override void SetValue(IDbDataParameter parameter, TimeSpan value)
+    {
+        parameter.Value = value.ToString();
+    }
+
+    public override TimeSpan Parse(object value)
+    {
+        return TimeSpan.TryParse(value.ToString(), out var timeSpan) 
+            ? timeSpan 
+            : throw new DataException("Invalid TimeSpan format");
     }
 }
