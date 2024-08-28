@@ -1,4 +1,4 @@
-namespace CodingTracker;
+namespace CodingTracker.A_Altemara;
 
 public class CodingSession
 {

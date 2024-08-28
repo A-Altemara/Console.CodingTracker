@@ -1,13 +1,13 @@
+using System.Configuration;
 using System.Data;
 using System.Data.SQLite;
 
+namespace CodingTracker.A_Altemara;
 
-namespace CodingTracker;
-
-using System.Configuration;
-
-public static class DatabaseConnection
+public static class CodingDb
 {
+    private static readonly Random Random = new Random();
+
     public static void DatabaseConnectionImplementation()
     {
         var connectionStringSettings = ConfigurationManager.ConnectionStrings["DefaultConnection"];
@@ -53,6 +53,9 @@ public static class DatabaseConnection
 
             CreateAndPopulateData(connection);
         }
+        
+        connection.Close();
+        Console.WriteLine("Connection Closed");
     }
 
     public static void CreateAndPopulateData(SQLiteConnection connection)
@@ -62,9 +65,9 @@ public static class DatabaseConnection
         while (counter > 0)
         {
             DateTime randomStart =
-                Randomizers.GenerateRandomStartDateTime(new DateTime(2022, 1, 1), new DateTime(2024, 7, 31));
-            DateTime randomEnd = Randomizers.GenerateRandomEndDateTime(randomStart, 1);
-            TimeSpan duration = GetDuration.CalculateDuration(randomStart, randomEnd);
+                GenerateRandomStartDateTime(new DateTime(2022, 1, 1), new DateTime(2024, 7, 31));
+            DateTime randomEnd = GenerateRandomEndDateTime(randomStart, 1);
+            TimeSpan duration = CalculateDuration(randomStart, randomEnd);
             // Create a Coding object and add it to the list
             var entry = new CodingSession
             {
@@ -88,5 +91,42 @@ public static class DatabaseConnection
 
             command.ExecuteNonQuery();
         }
+    }
+
+    public static DateTime GenerateRandomStartDateTime(DateTime startDate, DateTime endDate)
+    {
+        // Calculate the total number of seconds between the start and end dates
+        long totalSeconds = (long)(endDate - startDate).TotalSeconds;
+
+        // Generate a random number of seconds to add to the start date
+        long randomSeconds = Random.NextInt64(0, totalSeconds + 1); // Use NextInt64 for long values
+
+        // Return the new random date and time
+        return startDate.AddSeconds(randomSeconds);
+    }
+
+    public static DateTime GenerateRandomEndDateTime(DateTime startDate, int maxDays)
+    {
+        // Generate a random number of days between 0 and maxDays (inclusive)
+        int randomDays = Random.Next(0, maxDays + 1);
+
+        // Optionally, generate random hours, minutes, and seconds for more precise time
+        int randomHours = Random.Next(0, 24);
+        int randomMinutes = Random.Next(0, 60);
+        int randomSeconds = Random.Next(0, 60);
+
+        // Add the random days, hours, minutes, and seconds to the start date
+        DateTime randomEndDate = startDate.AddDays(randomDays)
+            .AddHours(randomHours)
+            .AddMinutes(randomMinutes)
+            .AddSeconds(randomSeconds);
+
+        // Return the calculated random end date and time
+        return randomEndDate;
+    }
+    
+    public static TimeSpan CalculateDuration(DateTime startTime, DateTime endTime)
+    {
+        return endTime - startTime;
     }
 }
