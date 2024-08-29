@@ -39,6 +39,10 @@ public static class Program
                     break;
                 case "View all Sessions":
                     ViewRecords(codingDb);
+                    Console.ReadLine();
+                    break;
+                case "Delete a Coding Session":
+                    DeleteEntry(codingDb);
                     break;
                 default:
                     Console.WriteLine("Invalid selection press Enter to try again");

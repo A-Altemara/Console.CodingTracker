@@ -39,7 +39,6 @@ public static class Menu
         
         AnsiConsole.Write(table);
         AnsiConsole.Markup("Press Enter to continue");
-        Console.ReadLine();
     }
     
     public static string? GetValidHabitId(IEnumerable<CodingSession> sessions)

@@ -55,11 +55,6 @@ public class CodingDb
         
         Console.WriteLine("Connection Closed");
     }
-    
-    public void CloseConnection()
-    {
-        _dbConnection.Close();
-    }
 
     private void CreateAndPopulateData()
     {
@@ -83,9 +78,7 @@ public class CodingDb
             counter--;
             _dbConnection.Execute(insertQuery, entry);
         }       
-
-
-        // Use Dapper to bulk insert data
+        
     }
     
     public List<CodingSession> GetAllRecords()
@@ -129,14 +122,9 @@ public class CodingDb
     
     public bool DeleteSession(string id)
     {
-        string deleteQuery = "DELETE FROM CodeTrackerTable WHERE Id = @id;";
-
-        using SQLiteCommand command = new(deleteQuery, _dbConnection);
-        command.Parameters.AddWithValue("@id", id);
-
         try
         {
-            command.ExecuteNonQuery();
+          _dbConnection.QueryFirstOrDefault<CodingSession>("DELETE FROM CodeTrackerTable WHERE Id = @Id", new { Id = id });
             return true;
         }
         catch
