@@ -1,5 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Configuration;
+using System.Data;
+using System.Security.Cryptography;
+using System.Threading.Channels;
 
 
 namespace CodingTracker.A_Altemara;
@@ -29,8 +32,7 @@ public static class Program
                     break;
                 case "Add New":
                     // selects option to enter new CodingSession
-                    Console.WriteLine("Enter New Coding Session,  press enter to continue");
-                    Console.ReadLine();
+                    AddNewEntry(codingDb);
                     break;
                 case "Edit Existing":
                     // Selects option to edit existing CodingSession
@@ -55,7 +57,7 @@ public static class Program
     private static void DeleteEntry(CodingDb codingDb)
     {
         var codingSessions = ViewRecords(codingDb);
-        var codingSessionId = Menu.GetValidHabitId(codingSessions);
+        var codingSessionId = Menu.GetValidSessionId(codingSessions);
         if (codingSessionId is null)
         {
             return;
@@ -78,5 +80,17 @@ public static class Program
         var sessions = codingDb.GetAllRecords();
         Menu.DisplayAllRecords(sessions);
         return sessions;
+    }
+
+    private static void AddNewEntry(CodingDb codingDb)
+    {
+        var newSession = Menu.NewSession();
+        if (newSession == null)
+        {
+            return;
+        }
+        codingDb.AddEntry(newSession);
+        Console.WriteLine($"You have add a coding session lasting {newSession.Duration}. Press enter to continue");
+        Console.ReadLine();
     }
 }

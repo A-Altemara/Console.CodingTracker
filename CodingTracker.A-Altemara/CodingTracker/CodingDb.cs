@@ -133,6 +133,13 @@ public class CodingDb
         }
     }
     
+    public void AddEntry(CodingSession codingSession)
+    {
+        string insertQuery = "INSERT INTO CodeTrackerTable (StartTime, EndTime, Duration) VALUES (@StartTime, @EndTime, @Duration);";
+
+        _dbConnection.Execute(insertQuery, codingSession);
+    }
+    
     public static TimeSpan CalculateDuration(DateTime startTime, DateTime endTime)
     {
         return endTime - startTime;
