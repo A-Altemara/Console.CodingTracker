@@ -144,6 +144,21 @@ public class CodingDb
     {
         return endTime - startTime;
     }
+
+    public bool UpdateSession (CodingSession codingSession)
+    {
+        string insertQuery = "INSERT INTO CodeTrackerTable (StartTime, EndTime, Duration) VALUES (@StartTime, @EndTime, @Duration);";
+        
+        try
+        {
+            _dbConnection.Execute(insertQuery, codingSession);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }
 
 public class TimeSpanHandler : SqlMapper.TypeHandler<TimeSpan>

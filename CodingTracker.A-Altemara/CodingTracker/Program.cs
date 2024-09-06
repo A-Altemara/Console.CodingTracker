@@ -3,6 +3,7 @@ using System.Configuration;
 using System.Data;
 using System.Security.Cryptography;
 using System.Threading.Channels;
+using Spectre.Console;
 
 
 namespace CodingTracker.A_Altemara;
@@ -15,7 +16,7 @@ public static class Program
         
         var connectionStringSettings = ConfigurationManager.ConnectionStrings["DefaultConnection"];
         var defaultConnection = connectionStringSettings.ConnectionString;
-        Console.WriteLine(defaultConnection);
+        // AnsiConsole.WriteLine(defaultConnection);
 
         var codingDb = new CodingDb(defaultConnection);
         
@@ -28,7 +29,7 @@ public static class Program
             {
                 case "Exit Program":
                     continueProgram = false;
-                    Console.WriteLine("Exiting Program");
+                    AnsiConsole.WriteLine("Exited Program");
                     break;
                 case "Add New":
                     // selects option to enter new CodingSession
@@ -36,8 +37,8 @@ public static class Program
                     break;
                 case "Edit Existing":
                     // Selects option to edit existing CodingSession
-                    Console.WriteLine("Editing am existing Coding Session, press enter to continue");
-                    Console.ReadLine();
+                    EditEntry(codingDb);
+                    // Console.ReadLine();
                     break;
                 case "View all Sessions":
                     ViewRecords(codingDb);
@@ -47,7 +48,7 @@ public static class Program
                     DeleteEntry(codingDb);
                     break;
                 default:
-                    Console.WriteLine("Invalid selection press Enter to try again");
+                    AnsiConsole.WriteLine("Invalid selection press Enter to try again");
                     Console.ReadLine();
                     break;
             }
@@ -90,7 +91,36 @@ public static class Program
             return;
         }
         codingDb.AddEntry(newSession);
-        Console.WriteLine($"You have add a coding session lasting {newSession.Duration}. Press enter to continue");
+        AnsiConsole.WriteLine($"You have add a coding session lasting {newSession.Duration}. Press enter to continue");
         Console.ReadLine();
+    }
+
+    private static void EditEntry(CodingDb codingDb)
+    {
+        var sessions = ViewRecords(codingDb);
+        var sessionIdString = Menu.GetValidSessionId(sessions);
+        if (sessionIdString == null)
+        {
+         return;   
+        }
+        var sessionId = Convert.ToInt32(sessionIdString);
+        var session = sessions.First(h => h.Id == sessionId);
+        var updatedSession = Menu.UpdateSession(session);
+        if (updatedSession is null)
+        {
+            return;
+        }
+
+        // var success = codingDb.UpdateSession(updatedSession);
+        if (codingDb.UpdateSession(updatedSession))
+        {
+            AnsiConsole.WriteLine("Record updated, press enter to continue");
+            Console.ReadLine();
+        }
+        else
+        {
+            AnsiConsole.WriteLine("Unable to update record, press enter to continue");
+            Console.ReadLine();
+        }
     }
 }
