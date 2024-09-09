@@ -9,16 +9,16 @@ public static class Menu
     /// Supported date formats for Coding entries.
     /// </summary>
     private static readonly string[] DateFormats = { "MM-dd-yyyy", "dd-MM-yyyy", "yyyy-MM-dd" };
-    
+
     /// <summary>
     /// Supported time formats for Coding entries.
     /// </summary>
-    private static readonly string[] TimeFormats = 
+    private static readonly string[] TimeFormats =
     {
-        "HH:mm:ss",    // 24-hour format with seconds
+        "HH:mm:ss", // 24-hour format with seconds
         "hh:mm:ss tt", // 12-hour format with seconds
-        "HH:mm",       // 24-hour format without seconds
-        "hh:mm tt"     // 12-hour format without seconds
+        "HH:mm", // 24-hour format without seconds
+        "hh:mm tt" // 12-hour format without seconds
     };
 
     static Menu()
@@ -36,12 +36,13 @@ public static class Menu
                 .Title("What's your Selection?")
                 .PageSize(5)
                 .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
-                .AddChoices(new[] {
-                    "Add New", "Edit Existing", "Delete a Coding Session", "View all Sessions","Exit Program"
+                .AddChoices(new[]
+                {
+                    "Add New", "Edit Existing", "Delete a Coding Session", "View all Sessions", "Exit Program"
                 }));
         return selection;
     }
-    
+
     public static string DisplayEditMenu()
     {
         Console.Clear();
@@ -52,12 +53,13 @@ public static class Menu
                 .Title("What's your Selection?")
                 .PageSize(5)
                 .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
-                .AddChoices(new[] {
-                    "Edit start time", "Edit Start Date", "Edit End time", "Edit End Date","Exit Edit option"
+                .AddChoices(new[]
+                {
+                    "Edit start time", "Edit Start Date", "Edit End time", "Edit End Date", "Exit Edit option"
                 }));
         return selection;
     }
-    
+
     /// <summary>
     /// Prompts the user to update a habit entry.
     /// </summary>
@@ -73,55 +75,73 @@ public static class Menu
             return null;
         }
 
+        DateTime startDateTime = session.StartTime;
+        DateTime endDateTime = session.EndTime;
+
         switch (selection)
         {
             case "Edit start time":
-                AnsiConsole.WriteLine("\nEditing the Habit Date");
-                AnsiConsole.WriteLine("Enter the new Date, MM-DD-YYYY");
-                // var newHabitDate = Console.ReadLine();
-                // var sanitizedNewDate = SanitizeNullOrWhiteSpace(newHabitDate);
-                // if (IsExit(sanitizedNewDate)) return null;
-                // var newDate = SanitizeDate(sanitizedNewDate).ToString(DateFormats[0]);
-                // session.Date = DateOnly.Parse(newDate);
+                AnsiConsole.WriteLine("\nEditing the Start Time");
+                var newStartTime = GetValidTime();
+                if (newStartTime == null)
+                {
+                    return null;
+                }
+
+                var currentStartDate = DateOnly.FromDateTime(session.StartTime);
+                startDateTime = currentStartDate.ToDateTime(newStartTime.Value);
                 break;
             case "Edit Start Date":
-                AnsiConsole.WriteLine("\nEditing the Habit Name");
-                AnsiConsole.WriteLine("Enter the new name");
-                // var newHabitName = Console.ReadLine();
-                // var sanitizedNewHabit = SanitizeNullOrWhiteSpace(newHabitName);
-                // if (IsExit(sanitizedNewHabit)) return null;
-                // session.HabitName = sanitizedNewHabit;
+                AnsiConsole.WriteLine("\nEditing the Start Date");
+                var newStartDate = GetValidDate();
+                if (newStartDate == null)
+                {
+                    return null;
+                }
+
+                var currentStartTime = TimeOnly.FromDateTime(session.StartTime);
+                startDateTime = newStartDate.Value.ToDateTime(currentStartTime);
                 break;
             case "Edit End time":
-                AnsiConsole.WriteLine("\nEditing the Habit Quantity");
-                AnsiConsole.WriteLine("Enter the new Quantity");
-                // var newQuantity = Console.ReadLine();
-                // if (IsExit(newQuantity ?? "")) return null;
-                // var sanitizedQuantity = SanitizeQuantity(newQuantity);
-                // session.Quantity = sanitizedQuantity;
+                AnsiConsole.WriteLine("\nEditing the Coding End time");
+                var newEndTime = GetValidTime();
+                if (newEndTime == null)
+                {
+                    return null;
+                }
+                
+                var currentEndDate = DateOnly.FromDateTime(session.EndTime);
+                endDateTime = currentEndDate.ToDateTime(newEndTime.Value);
                 break;
             case "Edit End Date":
-                AnsiConsole.WriteLine("\nEditing the Habit Units");
-                AnsiConsole.WriteLine("Enter the new Unit");
-                // var newUnits = Console.ReadLine();
-                // var sanitizedNewUnits = SanitizeNullOrWhiteSpace(newUnits);
-                // if (IsExit(sanitizedNewUnits)) return null;
-                // session.Units = sanitizedNewUnits;
+                AnsiConsole.WriteLine("\nEditing the Coding End Date");
+                var newEndtDate = GetValidDate();
+                if (newEndtDate == null)
+                {
+                    return null;
+                }
+                
+                var currentEndTime = TimeOnly.FromDateTime(session.EndTime);
+                endDateTime = newEndtDate.Value.ToDateTime(currentEndTime);
                 break;
             case "Exit Edit option":
                 AnsiConsole.WriteLine("Exiting edit option, press enter to continue.");
                 return null;
         }
 
+        session.StartTime = startDateTime;
+        session.EndTime = endDateTime;
+        session.Duration = CodingDb.CalculateDuration(startDateTime, endDateTime);
+        
         return session;
     }
-    
+
     public static void DisplayAllRecords(IEnumerable<CodingSession> sessions)
     {
         var table = new Table();
 
         table.AddColumns(["Id", "StartTime", "EndTime", "Duration"]);
-        
+
         foreach (var session in sessions)
         {
             table.AddRow(
@@ -130,7 +150,7 @@ public static class Menu
                 session.EndTime.ToString("yyyy-MM-dd HH:mm:ss"),
                 session.Duration.ToString());
         }
-        
+
         AnsiConsole.Write(table);
         AnsiConsole.WriteLine("Press Enter to continue");
     }
@@ -175,12 +195,15 @@ public static class Menu
 
             if (endDateTime <= startDateTime)
             {
-                AnsiConsole.MarkupLine("[bold red]End time is equal to or before start time please reenter dates and times[/]");
+                AnsiConsole.MarkupLine(
+                    "[bold red]End time is equal to or before start time please reenter dates and times[/]");
                 Console.ReadLine();
             }
+
             if ((endDateTime - startDateTime).TotalHours > 24)
             {
-                AnsiConsole.MarkupLine("[bold red]Coding time is longer than 24 hours please press enter to reenter dates and times[/]");
+                AnsiConsole.MarkupLine(
+                    "[bold red]Coding time is longer than 24 hours please press enter to reenter dates and times[/]");
                 Console.ReadLine();
             }
         }
@@ -191,30 +214,56 @@ public static class Menu
             EndTime = endDateTime,
             Duration = CodingDb.CalculateDuration(startDateTime, endDateTime)
         };
-        
+
         return newSession;
     }
 
     private static TimeOnly? GetValidTime()
     {
-        while (true)
-        {
-            AnsiConsole.WriteLine("Please enter your time, HH:MM");
-            string? startTime = Console.ReadLine();
-            string cleanStartTime = SanitizeNullOrWhiteSpace(startTime);
-            if (IsExit(cleanStartTime))
+        var timePrompt = new TextPrompt<string>("Enter the time to log (HH:mm) or 'e' to Exit: ")
+            .Validate(input =>
             {
-                return null;
-            }
+                if (input.Equals("e", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return ValidationResult.Success();
+                }
 
-            object? validTimeValue = SanitizeTime(cleanStartTime);
-            if (validTimeValue == null)
-            {
-                return null;
-            }
-            TimeOnly timePart = TimeOnly.Parse(validTimeValue.ToString());
-            return timePart;
+                if (TimeOnly.TryParse(input, out TimeOnly time))
+                {
+                    return ValidationResult.Success();
+                }
+
+                return ValidationResult.Error("Invalid time format");
+            });
+
+        string time = AnsiConsole.Prompt(timePrompt);
+
+        if (time == "e")
+        {
+            return null;
         }
+
+        var timePart = TimeOnly.Parse(time);
+        return timePart;
+
+        // while (true)
+        // {
+        //     AnsiConsole.WriteLine("Please enter your time, HH:MM");
+        //     string? startTime = Console.ReadLine();
+        //     string cleanStartTime = SanitizeNullOrWhiteSpace(startTime);
+        //     if (IsExit(cleanStartTime))
+        //     {
+        //         return null;
+        //     }
+        //
+        //     object? validTimeValue = SanitizeTime(cleanStartTime);
+        //     if (validTimeValue == null)
+        //     {
+        //         return null;
+        //     }
+        //     TimeOnly timePart = TimeOnly.Parse(validTimeValue.ToString());
+        //     return timePart;
+        // }
     }
 
     private static object? SanitizeTime(string startTime)
@@ -235,7 +284,8 @@ public static class Menu
             catch (Exception)
             {
                 AnsiConsole.WriteLine("Unable to convert time, please press enter try again.");
-                AnsiConsole.WriteLine("Enter Time completed (HH:MM for 24 hour clock, or HH:MM TT for 12 hour clock), or type 'E' to exit.");
+                AnsiConsole.WriteLine(
+                    "Enter Time completed (HH:MM for 24 hour clock, or HH:MM TT for 12 hour clock), or type 'E' to exit.");
                 string? newDateEntry = Console.ReadLine();
                 startTime = SanitizeNullOrWhiteSpace(newDateEntry);
                 if (IsExit(startTime))
@@ -248,26 +298,34 @@ public static class Menu
 
     private static DateOnly? GetValidDate()
     {
-        while (true)
-        {
-            AnsiConsole.WriteLine("Please enter the Date, YYYY-MM-DD or pres E to exit");
-            string? startDate = Console.ReadLine();
-            string cleanStartDate = SanitizeNullOrWhiteSpace(startDate);
-            if (IsExit(cleanStartDate))
+        var datePrompt = new TextPrompt<string>("Enter the Date to log (YYYY-MM-DD) or 'e' to exit: ")
+            .Validate(input =>
             {
-                return null;
-            }
+                if (input.Equals("e", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return ValidationResult.Success();
+                }
 
-            var validDateValue = SanitizeDate(cleanStartDate);
-            if (validDateValue == null)
-            {
-                return null;
-            }
-            var datePart = DateOnly.Parse(validDateValue.Value.ToString(DateFormats[2]));
-            return datePart;
+                if (DateTime.TryParseExact(input, DateFormats, null, System.Globalization.DateTimeStyles.None,
+                        out DateTime date))
+                {
+                    return ValidationResult.Success();
+                }
+
+                return ValidationResult.Error("Invalid date format");
+            });
+
+        string date = AnsiConsole.Prompt(datePrompt);
+
+        if (date == "e")
+        {
+            return null;
         }
+
+        DateOnly datePart = DateOnly.ParseExact(date, DateFormats);
+        return datePart;
     }
-    
+
     public static string? GetValidSessionId(IEnumerable<CodingSession> sessions)
     {
         var sessionIdHash = sessions.Select(h => h.Id.ToString()).ToHashSet();
@@ -322,8 +380,8 @@ public static class Menu
                 }
             }
         }
-    }    
-    
+    }
+
     /// <summary>
     /// Ensures the input is not null or whitespace.
     /// </summary>
@@ -339,7 +397,7 @@ public static class Menu
 
         return entryName;
     }
-    
+
     /// <summary>
     /// Determines if the user wants to exit based on the input.
     /// </summary>

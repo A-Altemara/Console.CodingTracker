@@ -16,8 +16,6 @@ public static class Program
         
         var connectionStringSettings = ConfigurationManager.ConnectionStrings["DefaultConnection"];
         var defaultConnection = connectionStringSettings.ConnectionString;
-        // AnsiConsole.WriteLine(defaultConnection);
-
         var codingDb = new CodingDb(defaultConnection);
         
         // SpectreTest.RunSpectre();

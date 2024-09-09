@@ -147,11 +147,13 @@ public class CodingDb
 
     public bool UpdateSession (CodingSession codingSession)
     {
-        string insertQuery = "INSERT INTO CodeTrackerTable (StartTime, EndTime, Duration) VALUES (@StartTime, @EndTime, @Duration);";
+        string updateQuery = "UPDATE CodeTrackerTable " +
+                             "SET StartTime = @StartTime, EndTime = @EndTime, Duration = @Duration " +
+                             "WHERE Id = @Id;";
         
         try
         {
-            _dbConnection.Execute(insertQuery, codingSession);
+            _dbConnection.Execute(updateQuery, codingSession);
             return true;
         }
         catch

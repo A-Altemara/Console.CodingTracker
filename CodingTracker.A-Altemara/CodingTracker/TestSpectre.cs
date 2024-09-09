@@ -6,6 +6,24 @@ class SpectreTest
     public static void RunSpectre()
     {
         AnsiConsole.Markup("[bold yellow]Welcome to Spectre.Console![/]\n");
+        
+        var timePrompt = new TextPrompt<string>("Enter the time to log (HH:mm) or 'c' to cancel: ")
+            .Validate(input =>
+            {
+                if (input.Equals("c", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return ValidationResult.Success();
+                }
+
+                if (DateTime.TryParse(input, out DateTime time))
+                {
+                    return ValidationResult.Success();
+                }
+
+                return ValidationResult.Error("Invalid time format");
+            });
+
+        string time = AnsiConsole.Prompt(timePrompt);
 
         // var table = new Table();
         // table.AddColumn("Name");
