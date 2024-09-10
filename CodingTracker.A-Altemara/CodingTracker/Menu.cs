@@ -1,4 +1,3 @@
-using System.Globalization;
 using Spectre.Console;
 
 namespace CodingTracker.A_Altemara;
@@ -6,25 +5,9 @@ namespace CodingTracker.A_Altemara;
 public static class Menu
 {
     /// <summary>
-    /// Supported date formats for Coding entries.
+    /// Displays Main Menu
     /// </summary>
-    private static readonly string[] DateFormats = { "MM-dd-yyyy", "dd-MM-yyyy", "yyyy-MM-dd" };
-
-    /// <summary>
-    /// Supported time formats for Coding entries.
-    /// </summary>
-    private static readonly string[] TimeFormats =
-    {
-        "HH:mm:ss", // 24-hour format with seconds
-        "hh:mm:ss tt", // 12-hour format with seconds
-        "HH:mm", // 24-hour format without seconds
-        "hh:mm tt" // 12-hour format without seconds
-    };
-
-    static Menu()
-    {
-    }
-
+    /// <returns>The selection as a string</returns>
     public static string DisplayMenu()
     {
         // uses Spectre to display console menu
@@ -36,14 +19,17 @@ public static class Menu
                 .Title("What's your Selection?")
                 .PageSize(5)
                 .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
-                .AddChoices(new[]
-                {
+                .AddChoices([
                     "Add New", "Edit Existing", "Delete a Coding Session", "View all Sessions", "Exit Program"
-                }));
+                ]));
         return selection;
     }
 
-    public static string DisplayEditMenu()
+    /// <summary>
+    /// Displays Edit Existing Session Menu
+    /// </summary>
+    /// <returns>selection as a string</returns>
+    private static string DisplayEditMenu()
     {
         Console.Clear();
         AnsiConsole.Markup("[bold blue]Selected edit a session![/]\n");
@@ -53,89 +39,99 @@ public static class Menu
                 .Title("What's your Selection?")
                 .PageSize(5)
                 .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
-                .AddChoices(new[]
-                {
+                .AddChoices([
                     "Edit start time", "Edit Start Date", "Edit End time", "Edit End Date", "Exit Edit option"
-                }));
+                ]));
         return selection;
     }
 
     /// <summary>
-    /// Prompts the user to update a habit entry.
+    /// Prompts the user to update a session entry.
     /// </summary>
     /// <param name="session">The Session to update.</param>
-    /// <returns>The updated <see cref="Session"/> object, or null if the user exits.</returns>
+    /// <returns>The updated <see cref="session"/> object, or null if the user exits.</returns>
     public static CodingSession? UpdateSession(CodingSession session)
     {
         var selection = DisplayEditMenu();
 
-        if (selection.ToLower() == "e")
+        if (selection.Equals("e", StringComparison.CurrentCultureIgnoreCase))
         {
             AnsiConsole.WriteLine("Exiting, press enter to continue");
             return null;
         }
 
-        DateTime startDateTime = session.StartTime;
-        DateTime endDateTime = session.EndTime;
-
-        switch (selection)
+        var startDateTime = session.StartTime;
+        var endDateTime = session.EndTime;
+        while (true)
         {
-            case "Edit start time":
-                AnsiConsole.WriteLine("\nEditing the Start Time");
-                var newStartTime = GetValidTime();
-                if (newStartTime == null)
-                {
-                    return null;
-                }
+            switch (selection)
+            {
+                case "Edit start time":
+                    AnsiConsole.WriteLine("\nEditing the Start Time");
+                    var newStartTime = GetValidTime();
+                    if (newStartTime == null)
+                    {
+                        return null;
+                    }
 
-                var currentStartDate = DateOnly.FromDateTime(session.StartTime);
-                startDateTime = currentStartDate.ToDateTime(newStartTime.Value);
-                break;
-            case "Edit Start Date":
-                AnsiConsole.WriteLine("\nEditing the Start Date");
-                var newStartDate = GetValidDate();
-                if (newStartDate == null)
-                {
-                    return null;
-                }
+                    var currentStartDate = DateOnly.FromDateTime(session.StartTime);
+                    startDateTime = currentStartDate.ToDateTime(newStartTime.Value);
+                    break;
+                case "Edit Start Date":
+                    AnsiConsole.WriteLine("\nEditing the Start Date");
+                    var newStartDate = GetValidDate();
+                    if (newStartDate == null)
+                    {
+                        return null;
+                    }
 
-                var currentStartTime = TimeOnly.FromDateTime(session.StartTime);
-                startDateTime = newStartDate.Value.ToDateTime(currentStartTime);
-                break;
-            case "Edit End time":
-                AnsiConsole.WriteLine("\nEditing the Coding End time");
-                var newEndTime = GetValidTime();
-                if (newEndTime == null)
-                {
+                    var currentStartTime = TimeOnly.FromDateTime(session.StartTime);
+                    startDateTime = newStartDate.Value.ToDateTime(currentStartTime);
+                    break;
+                case "Edit End time":
+                    AnsiConsole.WriteLine("\nEditing the Coding End time");
+                    var newEndTime = GetValidTime();
+                    if (newEndTime == null)
+                    {
+                        return null;
+                    }
+
+                    var currentEndDate = DateOnly.FromDateTime(session.EndTime);
+                    endDateTime = currentEndDate.ToDateTime(newEndTime.Value);
+                    break;
+                case "Edit End Date":
+                    AnsiConsole.WriteLine("\nEditing the Coding End Date");
+                    var newEndDate = GetValidDate();
+                    if (newEndDate == null)
+                    {
+                        return null;
+                    }
+
+                    var currentEndTime = TimeOnly.FromDateTime(session.EndTime);
+                    endDateTime = newEndDate.Value.ToDateTime(currentEndTime);
+                    break;
+                case "Exit Edit option":
+                    AnsiConsole.WriteLine("Exiting edit option, press enter to continue.");
                     return null;
-                }
-                
-                var currentEndDate = DateOnly.FromDateTime(session.EndTime);
-                endDateTime = currentEndDate.ToDateTime(newEndTime.Value);
-                break;
-            case "Edit End Date":
-                AnsiConsole.WriteLine("\nEditing the Coding End Date");
-                var newEndtDate = GetValidDate();
-                if (newEndtDate == null)
-                {
-                    return null;
-                }
-                
-                var currentEndTime = TimeOnly.FromDateTime(session.EndTime);
-                endDateTime = newEndtDate.Value.ToDateTime(currentEndTime);
-                break;
-            case "Exit Edit option":
-                AnsiConsole.WriteLine("Exiting edit option, press enter to continue.");
-                return null;
+            }
+
+            session.StartTime = startDateTime;
+            session.EndTime = endDateTime;
+            session.Duration = CodingDb.CalculateDuration(startDateTime, endDateTime);
+
+            if (endDateTime >= startDateTime && session.Duration.Hours <= 24)
+            {
+                return session;
+            }
+
+            AnsiConsole.MarkupLine("[bold red]Invalid Edit please try again.[/]");
         }
-
-        session.StartTime = startDateTime;
-        session.EndTime = endDateTime;
-        session.Duration = CodingDb.CalculateDuration(startDateTime, endDateTime);
-        
-        return session;
     }
 
+    /// <summary>
+    /// Displays all session records in the console.
+    /// </summary>
+    /// <param name="sessions">A collection of session records to display.</param>
     public static void DisplayAllRecords(IEnumerable<CodingSession> sessions)
     {
         var table = new Table();
@@ -155,6 +151,10 @@ public static class Menu
         AnsiConsole.WriteLine("Press Enter to continue");
     }
 
+    /// <summary>
+    /// Prompts the user to add a new session record and returns the created session.
+    /// </summary>
+    /// <returns>A new <see cref="CodingSession"/> object if the user completes the input, otherwise null if the user exits.</returns>
     public static CodingSession? NewSession()
     {
         var startDateTime = DateTime.MinValue;
@@ -218,6 +218,10 @@ public static class Menu
         return newSession;
     }
 
+    /// <summary>
+    /// Prompts the user to enter a valid time.
+    /// </summary>
+    /// <returns>The valid time entered by the user, or null if the user exits.</returns>
     private static TimeOnly? GetValidTime()
     {
         var timePrompt = new TextPrompt<string>("Enter the time to log (HH:mm) or 'e' to Exit: ")
@@ -245,59 +249,17 @@ public static class Menu
 
         var timePart = TimeOnly.Parse(time);
         return timePart;
-
-        // while (true)
-        // {
-        //     AnsiConsole.WriteLine("Please enter your time, HH:MM");
-        //     string? startTime = Console.ReadLine();
-        //     string cleanStartTime = SanitizeNullOrWhiteSpace(startTime);
-        //     if (IsExit(cleanStartTime))
-        //     {
-        //         return null;
-        //     }
-        //
-        //     object? validTimeValue = SanitizeTime(cleanStartTime);
-        //     if (validTimeValue == null)
-        //     {
-        //         return null;
-        //     }
-        //     TimeOnly timePart = TimeOnly.Parse(validTimeValue.ToString());
-        //     return timePart;
-        // }
     }
 
-    private static object? SanitizeTime(string startTime)
-    {
-        while (true)
-        {
-            try
-            {
-                if (TimeOnly.TryParseExact(startTime, TimeFormats, null, DateTimeStyles.None,
-                        out TimeOnly timeValue))
-                {
-                    AnsiConsole.WriteLine("Converted time to convention");
-                    return timeValue;
-                }
-
-                throw new FormatException("Invalid time format.\n");
-            }
-            catch (Exception)
-            {
-                AnsiConsole.WriteLine("Unable to convert time, please press enter try again.");
-                AnsiConsole.WriteLine(
-                    "Enter Time completed (HH:MM for 24 hour clock, or HH:MM TT for 12 hour clock), or type 'E' to exit.");
-                string? newDateEntry = Console.ReadLine();
-                startTime = SanitizeNullOrWhiteSpace(newDateEntry);
-                if (IsExit(startTime))
-                {
-                    return null;
-                }
-            }
-        }
-    }
-
+    /// <summary>
+    /// Prompts the user to enter a valid date.
+    /// </summary>
+    /// <returns>The valid date entered by the user, or null if the user exits.</returns>
     private static DateOnly? GetValidDate()
     {
+        // Supported date formats for Coding entries.
+        string[] dateFormats = ["MM-dd-yyyy", "dd-MM-yyyy", "yyyy-MM-dd"];
+
         var datePrompt = new TextPrompt<string>("Enter the Date to log (YYYY-MM-DD) or 'e' to exit: ")
             .Validate(input =>
             {
@@ -306,7 +268,7 @@ public static class Menu
                     return ValidationResult.Success();
                 }
 
-                if (DateTime.TryParseExact(input, DateFormats, null, System.Globalization.DateTimeStyles.None,
+                if (DateTime.TryParseExact(input, dateFormats, null, System.Globalization.DateTimeStyles.None,
                         out DateTime date))
                 {
                     return ValidationResult.Success();
@@ -322,10 +284,15 @@ public static class Menu
             return null;
         }
 
-        DateOnly datePart = DateOnly.ParseExact(date, DateFormats);
+        DateOnly datePart = DateOnly.ParseExact(date, dateFormats);
         return datePart;
     }
 
+    /// <summary>
+    /// Prompts the user to enter a valid session ID from the provided collection of sessions.
+    /// </summary>
+    /// <param name="CodingSession">A collection of session records to validate against.</param>
+    /// <returns>The valid session ID entered by the user, or null if the user exits.</returns>
     public static string? GetValidSessionId(IEnumerable<CodingSession> sessions)
     {
         var sessionIdHash = sessions.Select(h => h.Id.ToString()).ToHashSet();
@@ -347,74 +314,9 @@ public static class Menu
 
         return id;
     }
-
-    /// <summary>
-    /// Sanitizes the date input, ensuring it's in a valid format.
-    /// </summary>
-    /// <param name="dateEntry">The date input as a string.</param>
-    /// <returns>A sanitized <see cref="DateOnly"/> object representing the date.</returns>
-    private static DateOnly? SanitizeDate(string? dateEntry)
-    {
-        while (true)
-        {
-            try
-            {
-                if (DateOnly.TryParseExact(dateEntry, DateFormats, null, DateTimeStyles.None,
-                        out var dateValue))
-                {
-                    AnsiConsole.WriteLine("Converted date to convention");
-                    return dateValue;
-                }
-
-                throw new FormatException("Invalid date format.");
-            }
-            catch (Exception)
-            {
-                AnsiConsole.WriteLine("Unable to convert date, please try again.");
-                AnsiConsole.WriteLine("Enter Date completed (mm-dd-yyyy or dd-mm-yyyy), or type 'E' to exit.");
-                string? newDateEntry = Console.ReadLine();
-                dateEntry = SanitizeNullOrWhiteSpace(newDateEntry);
-                if (IsExit(dateEntry))
-                {
-                    return null;
-                }
-            }
-        }
-    }
-
-    /// <summary>
-    /// Ensures the input is not null or whitespace.
-    /// </summary>
-    /// <param name="entryName">The input string.</param>
-    /// <returns>A sanitized non-empty string.</returns>
-    private static string SanitizeNullOrWhiteSpace(string? entryName)
-    {
-        while (string.IsNullOrWhiteSpace(entryName))
-        {
-            AnsiConsole.MarkupLine("[bold red]Invalid entry, please try again or press E to exit[/]");
-            entryName = Console.ReadLine()?.ToLower();
-        }
-
-        return entryName;
-    }
-
-    /// <summary>
-    /// Determines if the user wants to exit based on the input.
-    /// </summary>
-    /// <param name="entry">The input string.</param>
-    /// <returns><c>true</c> if the user wants to exit, otherwise <c>false</c>.</returns>
-    private static bool IsExit(string entry)
-    {
-        if (entry.ToLower() == "e")
-        {
-            AnsiConsole.MarkupLine("[bold red]Exiting to main menu, press enter to continue[/]");
-            Console.ReadLine();
-            return true;
-        }
-
-        return false;
-    }
 }
+
+// Stretch Goals
 //"Start new Coding session", 
 // "End Coding session",
 // "View Progress towards goal",

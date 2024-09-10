@@ -1,18 +1,26 @@
 using System.Data;
 using System.Data.SQLite;
-using System.Globalization;
 using Dapper;
 
 namespace CodingTracker.A_Altemara;
 
+/// <summary>
+/// Represents a database handler for code session tracking, using SQLite as the database engine.
+/// </summary>
 public class CodingDb
 {
-    private static readonly Random Random = new Random();
+    private static readonly Random Random = new();
     private readonly SQLiteConnection _dbConnection;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CodingDb"/> class and connects to the specified SQLite database.
+    /// If the "CodeTrackerTable" table does not exist, it creates the table and pre-populates it with random data.
+    /// </summary>
+    /// <param name="connectionString">The connection string for the SQLite database.</param>
     public CodingDb(string connectionString)
     {
-        Dapper.SqlMapper.AddTypeHandler(new TimeSpanHandler());
-        
+        SqlMapper.AddTypeHandler(new TimeSpanHandler());
+
         _dbConnection = new SQLiteConnection(connectionString);
 
         _dbConnection.Open();
@@ -24,12 +32,12 @@ public class CodingDb
 
         Console.WriteLine("Connected to the database.");
 
-        string checkTableQuery = "SELECT name FROM sqlite_master WHERE type='table' AND name='CodeTrackerTable';";
+        var checkTableQuery = "SELECT name FROM sqlite_master WHERE type='table' AND name='CodeTrackerTable';";
         var tableExists = false;
 
         using (SQLiteCommand command = new(checkTableQuery, _dbConnection))
         {
-            using (SQLiteDataReader reader = command.ExecuteReader())
+            using (var reader = command.ExecuteReader())
             {
                 tableExists = reader.HasRows;
             }
@@ -39,29 +47,32 @@ public class CodingDb
 
         if (!tableExists)
         {
-            string createTableQuery = "CREATE TABLE CodeTrackerTable " +
-                                      "(Id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                                      "StartTime TEXT NOT NULL , " +
-                                      "EndTime TEXT NOT NULL, " +
-                                      "Duration TEXT);";
+            var createTableQuery = "CREATE TABLE CodeTrackerTable " +
+                                   "(Id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                                   "StartTime TEXT NOT NULL , " +
+                                   "EndTime TEXT NOT NULL, " +
+                                   "Duration TEXT);";
 
-            using (SQLiteCommand command = new (createTableQuery, _dbConnection))
+            using (SQLiteCommand command = new(createTableQuery, _dbConnection))
             {
                 command.ExecuteNonQuery();
             }
 
             CreateAndPopulateData();
         }
-        
+
         Console.WriteLine("Connection Closed");
     }
 
+    /// <summary>
+    /// Generates random data and populates the "CodeTrackerTable" table with pre-populated data.
+    /// </summary>
     private void CreateAndPopulateData()
     {
-        List<CodingSession> prepopulatedData = new();
-        string insertQuery = "INSERT INTO CodeTrackerTable (StartTime, EndTime, Duration) VALUES (@StartTime, @EndTime, @Duration);";
+        string insertQuery =
+            "INSERT INTO CodeTrackerTable (StartTime, EndTime, Duration) VALUES (@StartTime, @EndTime, @Duration);";
         int counter = 10;
-        while (counter > 0)        
+        while (counter > 0)
 
         {
             var randomStart =
@@ -74,20 +85,29 @@ public class CodingDb
                 EndTime = randomEnd,
                 Duration = duration
             };
-            prepopulatedData.Add(entry);
             counter--;
             _dbConnection.Execute(insertQuery, entry);
-        }       
-        
+        }
     }
-    
+
+    /// <summary>
+    /// Retrieves all records from the "CodeTrackerTable" table.
+    /// </summary>
+    /// <returns>A list of all <see cref="CodingSession"/> records from the database.</returns>
     public List<CodingSession> GetAllRecords()
     {
         var sessions =
-            _dbConnection.Query<CodingSession>("SELECT Id, StartTime, EndTime, Duration FROM CodeTrackerTable").ToList();
+            _dbConnection.Query<CodingSession>("SELECT Id, StartTime, EndTime, Duration FROM CodeTrackerTable")
+                .ToList();
         return sessions;
     }
 
+    /// <summary>
+    /// Generates a random start date within a specified range.
+    /// </summary>
+    /// <param name="startDate">The start date of the range.</param>
+    /// <param name="endDate">The end date of the range.</param>
+    /// <returns>A randomly chosen date within the specified range.</returns>
     private static DateTime GenerateRandomStartDateTime(DateTime startDate, DateTime endDate)
     {
         // Calculate the total number of seconds between the start and end dates
@@ -100,6 +120,12 @@ public class CodingDb
         return startDate.AddSeconds(randomSeconds);
     }
 
+    /// <summary>
+    /// Generates a random end date within a specified range.
+    /// </summary>
+    /// <param name="startDate">The start date of the range.</param>
+    /// <param name="maxDays">The upper limit of the range.</param>
+    /// <returns>A randomly chosen date within the specified range.</returns>
     private static DateTime GenerateRandomEndDateTime(DateTime startDate, int maxDays)
     {
         // Generate a random number of days between 0 and maxDays (inclusive)
@@ -119,12 +145,18 @@ public class CodingDb
         // Return the calculated random end date and time
         return randomEndDate;
     }
-    
+
+    /// <summary>
+    /// Deletes a session record from the "CodeTrackerTable" table by its ID.
+    /// </summary>
+    /// <param name="id">The ID of the session record to delete.</param>
+    /// <returns><c>true</c> if the record was deleted successfully; otherwise, <c>false</c>.</returns>
     public bool DeleteSession(string id)
     {
         try
         {
-          _dbConnection.QueryFirstOrDefault<CodingSession>("DELETE FROM CodeTrackerTable WHERE Id = @Id", new { Id = id });
+            _dbConnection.QueryFirstOrDefault<CodingSession>("DELETE FROM CodeTrackerTable WHERE Id = @Id",
+                new { Id = id });
             return true;
         }
         catch
@@ -132,25 +164,41 @@ public class CodingDb
             return false;
         }
     }
-    
+
+    /// <summary>
+    /// Adds a new session record to the "CodeTrackerTable" table.
+    /// </summary>
+    /// <param name="codingSession">The session record to add.</param>
     public void AddEntry(CodingSession codingSession)
     {
-        string insertQuery = "INSERT INTO CodeTrackerTable (StartTime, EndTime, Duration) VALUES (@StartTime, @EndTime, @Duration);";
+        string insertQuery =
+            "INSERT INTO CodeTrackerTable (StartTime, EndTime, Duration) VALUES (@StartTime, @EndTime, @Duration);";
 
         _dbConnection.Execute(insertQuery, codingSession);
     }
-    
+
+    /// <summary>
+    /// Calculates the duration of the session using provided start and end DateTimes.
+    /// </summary>
+    /// <param name="startTime">The start datetime of the session.</param>
+    /// <param name="endTime">The end dateTime of the session.</param>
+    /// <returns>Time span of the length of the session.</returns>
     public static TimeSpan CalculateDuration(DateTime startTime, DateTime endTime)
     {
         return endTime - startTime;
     }
 
-    public bool UpdateSession (CodingSession codingSession)
+    /// <summary>
+    /// Updates an existing session record in the "CodeTrackerTable" table.
+    /// </summary>
+    /// <param name="codingSession">The session record to update.</param>
+    /// <returns><c>true</c> if the record was updated successfully; otherwise, <c>false</c>.</returns>
+    public bool UpdateSession(CodingSession codingSession)
     {
         string updateQuery = "UPDATE CodeTrackerTable " +
                              "SET StartTime = @StartTime, EndTime = @EndTime, Duration = @Duration " +
                              "WHERE Id = @Id;";
-        
+
         try
         {
             _dbConnection.Execute(updateQuery, codingSession);
@@ -163,17 +211,36 @@ public class CodingDb
     }
 }
 
+/// <summary>
+/// Custom Dapper type handler for handling <see cref="TimeSpan"/> values.
+/// </summary>
+/// <remarks>
+/// This class is used to convert <see cref="TimeSpan"/> values to and from the database when using Dapper.
+/// The <see cref="SetValue"/> method converts the <see cref="TimeSpan"/> to a string representation before storing it in the database.
+/// The <see cref="Parse"/> method converts the string representation of a <see cref="TimeSpan"/> from the database back into a <see cref="TimeSpan"/> object.
+/// </remarks>
 public class TimeSpanHandler : SqlMapper.TypeHandler<TimeSpan>
 {
+    /// <summary>
+    /// Assigns the string representation of a <see cref="TimeSpan"/> to a database parameter.
+    /// </summary>
+    /// <param name="parameter">The database parameter to which the value is assigned.</param>
+    /// <param name="value">The <see cref="TimeSpan"/> value to be converted and assigned to the parameter.</param>
     public override void SetValue(IDbDataParameter parameter, TimeSpan value)
     {
         parameter.Value = value.ToString();
     }
 
+    /// <summary>
+    /// Parses a database value and converts it into a <see cref="TimeSpan"/>.
+    /// </summary>
+    /// <param name="value">The database value to be parsed.</param>
+    /// <returns>A <see cref="TimeSpan"/> object representing the parsed value.</returns>
+    /// <exception cref="DataException">Thrown when the value cannot be parsed into a valid <see cref="TimeSpan"/>.</exception>
     public override TimeSpan Parse(object value)
     {
-        return TimeSpan.TryParse(value.ToString(), out var timeSpan) 
-            ? timeSpan 
+        return TimeSpan.TryParse(value.ToString(), out var timeSpan)
+            ? timeSpan
             : throw new DataException("Invalid TimeSpan format");
     }
 }
