@@ -1,31 +1,10 @@
 using CodingTracker.A_Altemara.Models;
 using Spectre.Console;
 
-namespace CodingTracker.A_Altemara;
+namespace CodingTracker.A_Altemara.Menus;
 
-public static class Menu
+public static class SessionMenu
 {
-    /// <summary>
-    /// Displays Main Menu
-    /// </summary>
-    /// <returns>The selection as a string</returns>
-    public static string DisplayMenu()
-    {
-        // uses Spectre to display console menu
-        Console.Clear();
-        AnsiConsole.Markup("[bold blue]Welcome to your coding tracker![/]\n");
-        AnsiConsole.Markup("[blue]Please select from the following options[/]\n");
-        var selection = AnsiConsole.Prompt(
-            new SelectionPrompt<string>()
-                .Title("What's your Selection?")
-                .PageSize(5)
-                .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
-                .AddChoices([
-                    "Add New", "Edit Existing", "Delete a Coding Session", "View all Sessions", "Exit Program"
-                ]));
-        return selection;
-    }
-
     /// <summary>
     /// Displays Edit Existing Session Menu
     /// </summary>
@@ -42,23 +21,6 @@ public static class Menu
                 .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
                 .AddChoices([
                     "Edit start time", "Edit Start Date", "Edit End time", "Edit End Date", "Exit Edit option"
-                ]));
-        return selection;
-    }
-    
-    public static string DisplayGoalMenu()
-    {
-        // uses Spectre to display console menu
-        Console.Clear();
-        AnsiConsole.Markup("[bold blue]Welcome to your Goals tracker![/]\n");
-        AnsiConsole.Markup("[blue]Please select from the following options[/]\n");
-        var selection = AnsiConsole.Prompt(
-            new SelectionPrompt<string>()
-                .Title("What's your Selection?")
-                .PageSize(5)
-                // .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
-                .AddChoices([
-                    "Add New Goal", "Edit Existing Goal", "Delete a Goal", "View all goals", "View progress on Goals", "Exit to Main Menu"
                 ]));
         return selection;
     }
@@ -86,7 +48,7 @@ public static class Menu
             {
                 case "Edit start time":
                     AnsiConsole.WriteLine("\nEditing the Start Time");
-                    var newStartTime = GetValidTime();
+                    var newStartTime = Menu.GetValidTime();
                     if (newStartTime == null)
                     {
                         return null;
@@ -97,7 +59,7 @@ public static class Menu
                     break;
                 case "Edit Start Date":
                     AnsiConsole.WriteLine("\nEditing the Start Date");
-                    var newStartDate = GetValidDate();
+                    var newStartDate = Menu.GetValidDate();
                     if (newStartDate == null)
                     {
                         return null;
@@ -108,7 +70,7 @@ public static class Menu
                     break;
                 case "Edit End time":
                     AnsiConsole.WriteLine("\nEditing the Coding End time");
-                    var newEndTime = GetValidTime();
+                    var newEndTime = Menu.GetValidTime();
                     if (newEndTime == null)
                     {
                         return null;
@@ -119,7 +81,7 @@ public static class Menu
                     break;
                 case "Edit End Date":
                     AnsiConsole.WriteLine("\nEditing the Coding End Date");
-                    var newEndDate = GetValidDate();
+                    var newEndDate = Menu.GetValidDate();
                     if (newEndDate == null)
                     {
                         return null;
@@ -168,29 +130,6 @@ public static class Menu
         AnsiConsole.Write(table);
         AnsiConsole.WriteLine("Press Enter to continue");
     }
-    
-    /// <summary>
-    /// Displays all goal records in the console.
-    /// </summary>
-    /// <param name="goals">A collection of goal records to display.</param>
-    public static void DisplayAllGoalRecords(IEnumerable<CodingGoal> goals)
-    {
-        var table = new Table();
-
-        table.AddColumns(["Id", "Month", "Year", "Goal Hours"]);
-
-        foreach (var goal in goals)
-        {
-            table.AddRow(
-                goal.Id.ToString(),
-                goal.GoalMonth,
-                goal.GoalYear,
-                goal.GoalHours.ToString());
-        }
-
-        AnsiConsole.Write(table);
-        AnsiConsole.WriteLine("Press Enter to continue");
-    }
 
     /// <summary>
     /// Prompts the user to add a new session record and returns the created session.
@@ -203,14 +142,14 @@ public static class Menu
         while (endDateTime <= startDateTime || (endDateTime - startDateTime).TotalHours > 24)
         {
             AnsiConsole.Markup("[bold blue]Start Time[/]\n");
-            var startDateValue = GetValidDate();
+            var startDateValue = Menu.GetValidDate();
             if (startDateValue == null)
             {
                 return null;
             }
 
             AnsiConsole.Markup("[bold blue]Start time[/]\n");
-            var startClock = GetValidTime();
+            var startClock = Menu.GetValidTime();
             if (startClock == null)
             {
                 return null;
@@ -219,14 +158,14 @@ public static class Menu
             startDateTime = startDateValue.Value.ToDateTime(startClock.Value);
 
             AnsiConsole.Markup("[bold blue]End Time[/]\n");
-            var endDate = GetValidDate();
+            var endDate = Menu.GetValidDate();
             if (endDate == null)
             {
                 return null;
             }
 
             AnsiConsole.Markup("[bold blue]End time[/]\n");
-            var endClock = GetValidTime();
+            var endClock = Menu.GetValidTime();
             if (endClock == null)
             {
                 return null;
@@ -260,123 +199,19 @@ public static class Menu
     }
 
     /// <summary>
-    /// Prompts the user to enter a valid time.
+    /// Prompts the user to create a new session record and adds it to the database.
     /// </summary>
-    /// <returns>The valid time entered by the user, or null if the user exits.</returns>
-    private static TimeOnly? GetValidTime()
+    /// <param name="codingDb">The database connection to use.</param>
+    public static void AddNewEntry(CodingDb codingDb)
     {
-        var timePrompt = new TextPrompt<string>("Enter the time to log (HH:mm) or 'e' to Exit: ")
-            .Validate(input =>
-            {
-                if (input.Equals("e", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    return ValidationResult.Success();
-                }
-
-                if (TimeOnly.TryParse(input, out TimeOnly time))
-                {
-                    return ValidationResult.Success();
-                }
-
-                return ValidationResult.Error("Invalid time format");
-            });
-
-        string time = AnsiConsole.Prompt(timePrompt);
-
-        if (time == "e")
+        var newSession = NewSession();
+        if (newSession == null)
         {
-            return null;
+            return;
         }
 
-        var timePart = TimeOnly.Parse(time);
-        return timePart;
-    }
-
-    /// <summary>
-    /// Prompts the user to enter a valid date.
-    /// </summary>
-    /// <returns>The valid date entered by the user, or null if the user exits.</returns>
-    private static DateOnly? GetValidDate()
-    {
-        // Supported date formats for Coding entries.
-        string[] dateFormats = ["MM-dd-yyyy", "dd-MM-yyyy", "yyyy-MM-dd"];
-
-        var datePrompt = new TextPrompt<string>("Enter the Date to log (YYYY-MM-DD) or 'e' to exit: ")
-            .Validate(input =>
-            {
-                if (input.Equals("e", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    return ValidationResult.Success();
-                }
-
-                if (DateTime.TryParseExact(input, dateFormats, null, System.Globalization.DateTimeStyles.None,
-                        out DateTime date))
-                {
-                    return ValidationResult.Success();
-                }
-
-                return ValidationResult.Error("Invalid date format");
-            });
-
-        string date = AnsiConsole.Prompt(datePrompt);
-
-        if (date == "e")
-        {
-            return null;
-        }
-
-        DateOnly datePart = DateOnly.ParseExact(date, dateFormats);
-        return datePart;
-    }
-
-    /// <summary>
-    /// Prompts the user to enter a valid session ID from the provided collection of entries.
-    /// </summary>
-    /// <param name="entries">A collection of entry records to validate against.</param>
-    /// <returns>The valid entry ID entered by the user, or null if the user exits.</returns>
-    public static string? GetValidId(IEnumerable<IEntry> entries)
-    {
-        var sessionIdHash = entries.Select(h => h.Id.ToString()).ToHashSet();
-        AnsiConsole.WriteLine("Enter the record ID or E to exit.");
-        var id = Console.ReadLine()?.ToLower();
-
-        while (string.IsNullOrWhiteSpace(id) || !sessionIdHash.Contains(id) || id == "e")
-        {
-            if (id == "e")
-            {
-                AnsiConsole.WriteLine("Exiting to main menu, press enter to continue");
-                Console.ReadLine();
-                return null;
-            }
-
-            AnsiConsole.WriteLine("Invalid entry, please try again or press E to exit");
-            id = Console.ReadLine()?.ToLower();
-        }
-
-        return id;
-    }
-
-    public static void ShowProgressToGoal(TimeSpan goalHours, TimeSpan progress)
-    {
-        AnsiConsole.Write(new BreakdownChart()
-            .FullSize()
-            .AddItem("Progress", progress.TotalHours, Color.Green)
-            .AddItem("Goal", goalHours.TotalHours - progress.TotalHours, Color.Red));
-    }
-
-    public static void SetNewGoal()
-    {
-        throw new NotImplementedException();
+        codingDb.Add(newSession);
+        AnsiConsole.WriteLine($"You have add a coding session lasting {newSession.Duration}. Press enter to continue");
+        Console.ReadLine();
     }
 }
-
-// Stretch Goals
-//"Start new Coding session", 
-// "End Coding session",
-// with the ongoing session can you do other things in the meantime or will it just default to end session.
-// maybe leave the end session as first option if stopwatch is running, then can add other sessions.
-// "Set new goal",
-// what kind of goals? total hours, hours by time period
-// "Edit existing goal"
-// "View Progress towards goal",
-// select the goal to view, can view all goals?
