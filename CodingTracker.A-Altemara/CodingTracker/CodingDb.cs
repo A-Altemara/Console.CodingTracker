@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.SQLite;
+using CodingTracker.A_Altemara.Models;
 using Dapper;
 
 namespace CodingTracker.A_Altemara;
@@ -7,7 +8,7 @@ namespace CodingTracker.A_Altemara;
 /// <summary>
 /// Represents a database handler for code session tracking, using SQLite as the database engine.
 /// </summary>
-public class CodingDb
+public class CodingDb : ICodingTrackerDb<CodingSession>
 {
     private static readonly Random Random = new();
     private readonly SQLiteConnection _dbConnection;
@@ -26,11 +27,11 @@ public class CodingDb
         _dbConnection.Open();
         if (_dbConnection.State != ConnectionState.Open)
         {
-            Console.WriteLine("Failed to connect to the database.");
+            Console.WriteLine("Failed to connect to the Coding database.");
             return;
         }
 
-        Console.WriteLine("Connected to the database.");
+        Console.WriteLine("Connected to the Coding database.");
 
         var checkTableQuery = "SELECT name FROM sqlite_master WHERE type='table' AND name='CodeTrackerTable';";
         var tableExists = false;
@@ -61,7 +62,7 @@ public class CodingDb
             CreateAndPopulateData();
         }
 
-        Console.WriteLine("Connection Closed");
+        // Console.WriteLine("Connection Closed");
     }
 
     /// <summary>
@@ -90,11 +91,7 @@ public class CodingDb
         }
     }
 
-    /// <summary>
-    /// Retrieves all records from the "CodeTrackerTable" table.
-    /// </summary>
-    /// <returns>A list of all <see cref="CodingSession"/> records from the database.</returns>
-    public List<CodingSession> GetAllRecords()
+     public List<CodingSession> GetAllRecords()
     {
         var sessions =
             _dbConnection.Query<CodingSession>("SELECT Id, StartTime, EndTime, Duration FROM CodeTrackerTable")
@@ -151,7 +148,7 @@ public class CodingDb
     /// </summary>
     /// <param name="id">The ID of the session record to delete.</param>
     /// <returns><c>true</c> if the record was deleted successfully; otherwise, <c>false</c>.</returns>
-    public bool DeleteSession(string id)
+    public bool Delete(string id)
     {
         try
         {
@@ -169,7 +166,7 @@ public class CodingDb
     /// Adds a new session record to the "CodeTrackerTable" table.
     /// </summary>
     /// <param name="codingSession">The session record to add.</param>
-    public void AddEntry(CodingSession codingSession)
+    public void Add(CodingSession codingSession)
     {
         string insertQuery =
             "INSERT INTO CodeTrackerTable (StartTime, EndTime, Duration) VALUES (@StartTime, @EndTime, @Duration);";
@@ -193,7 +190,7 @@ public class CodingDb
     /// </summary>
     /// <param name="codingSession">The session record to update.</param>
     /// <returns><c>true</c> if the record was updated successfully; otherwise, <c>false</c>.</returns>
-    public bool UpdateSession(CodingSession codingSession)
+    public bool Update(CodingSession codingSession)
     {
         string updateQuery = "UPDATE CodeTrackerTable " +
                              "SET StartTime = @StartTime, EndTime = @EndTime, Duration = @Duration " +

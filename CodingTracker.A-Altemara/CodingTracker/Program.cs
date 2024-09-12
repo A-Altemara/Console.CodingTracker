@@ -1,4 +1,6 @@
-﻿using System.Configuration;
+﻿using System.ComponentModel;
+using System.Configuration;
+using CodingTracker.A_Altemara.Models;
 using Spectre.Console;
 
 namespace CodingTracker.A_Altemara;
@@ -45,6 +47,10 @@ public static class Program
                 case "Delete a Coding Session":
                     DeleteEntry(codingDb);
                     break;
+                case "View Goals Menu":
+                    GoalsMenu();
+                    Console.ReadLine();
+                    break;
                 default:
                     AnsiConsole.WriteLine("Invalid selection press Enter to try again");
                     Console.ReadLine();
@@ -57,17 +63,17 @@ public static class Program
     /// Deletes a session record from the database.
     /// Prompts the user to select a record to delete.
     /// </summary>
-    /// <param name="codingDb">The database connection to use.</param>
-    private static void DeleteEntry(CodingDb codingDb)
+    /// <param name="codingTrackerDb">The database connection to use.</param>
+    private static void DeleteEntry<T>(ICodingTrackerDb<T> codingTrackerDb) where T : IEntry
     {
-        var codingSessions = ViewRecords(codingDb);
-        var codingSessionId = Menu.GetValidSessionId(codingSessions);
-        if (codingSessionId is null)
+        var entries = ViewRecords(codingTrackerDb);
+        var sessionId = Menu.GetValidId(entries);
+        if (sessionId is null)
         {
             return;
         }
 
-        if (codingDb.DeleteSession(codingSessionId))
+        if (codingTrackerDb.Delete(sessionId))
         {
             Console.WriteLine("Record deleted successfully, press any key to continue");
         }
@@ -82,13 +88,26 @@ public static class Program
     /// <summary>
     /// Retrieves and displays all session records from the database.
     /// </summary>
-    /// <param name="codingDb">The database connection to use.</param>
+    /// <param name="codingTrackerDb">The database connection to use</param>
     /// <returns>A list of all session records in the database.</returns>
-    private static List<CodingSession> ViewRecords(CodingDb codingDb)
+    private static List<IEntry> ViewRecords<T>(ICodingTrackerDb<T> codingTrackerDb) where T : IEntry
     {
-        var sessions = codingDb.GetAllRecords();
-        Menu.DisplayAllRecords(sessions);
-        return sessions;
+        if (codingTrackerDb is CodingDb codingDb)
+        {        
+            var sessions = codingDb.GetAllRecords();
+            Menu.DisplayAllCodingSessionRecords(sessions);
+            List<IEntry> foo = [..sessions];
+            return foo;
+        }
+        else if (codingTrackerDb is GoalsDb)
+        {
+            // TODO implement displayGoals
+            throw new NotImplementedException();
+        }
+        else
+        {
+            throw new NotImplementedException();
+        }
     }
 
     /// <summary>
@@ -103,7 +122,7 @@ public static class Program
             return;
         }
 
-        codingDb.AddEntry(newSession);
+        codingDb.Add(newSession);
         AnsiConsole.WriteLine($"You have add a coding session lasting {newSession.Duration}. Press enter to continue");
         Console.ReadLine();
     }
@@ -112,34 +131,81 @@ public static class Program
     /// Prompts the user to update an existing session record in the database.
     /// Displays the current records and allows the user to select a record to edit.
     /// </summary>
-    /// <param name="codingDb">The database connection to use.</param>
-    private static void EditEntry(CodingDb codingDb)
+    /// <param name="codingTrackerDb">The database connection to use.</param>
+    private static void EditEntry<T>(ICodingTrackerDb<T> codingTrackerDb) where T : IEntry
     {
-        var sessions = ViewRecords(codingDb);
-        var sessionIdString = Menu.GetValidSessionId(sessions);
-        if (sessionIdString == null)
+        var entries = ViewRecords(codingTrackerDb);
+        var idString = Menu.GetValidId(entries);
+        if (idString == null)
         {
             return;
         }
 
-        var sessionId = Convert.ToInt32(sessionIdString);
-        var session = sessions.First(h => h.Id == sessionId);
-        var updatedSession = Menu.UpdateSession(session);
-        if (updatedSession is null)
+        var entryId = Convert.ToInt32(idString);
+        var entry = entries.First(h => h.Id == entryId);
+        if (codingTrackerDb is CodingDb codingDb)
         {
-            return;
-        }
+            var updatedSession = Menu.UpdateSession((entry as CodingSession)!);
+            if (updatedSession is null)
+            {
+                return;
+            }
 
-        // var success = codingDb.UpdateSession(updatedSession);
-        if (codingDb.UpdateSession(updatedSession))
-        {
-            AnsiConsole.WriteLine("Record updated, press enter to continue");
-            Console.ReadLine();
+            if (codingDb.Update(updatedSession))
+            {
+                AnsiConsole.WriteLine("Record updated, press enter to continue");
+                Console.ReadLine();
+            }
+            else
+            {
+                AnsiConsole.WriteLine("Unable to update record, press enter to continue");
+                Console.ReadLine();
+            }
         }
         else
         {
-            AnsiConsole.WriteLine("Unable to update record, press enter to continue");
-            Console.ReadLine();
+            throw new NotImplementedException();
+        }
+        
+
+        // // var success = codingDb.UpdateSession(updatedSession);
+        // if (codingTrackerDb.Update(updatedEntry))
+        // {
+        //     AnsiConsole.WriteLine("Record updated, press enter to continue");
+        //     Console.ReadLine();
+        // }
+        // else
+        // {
+        //     AnsiConsole.WriteLine("Unable to update record, press enter to continue");
+        //     Console.ReadLine();
+        // }
+    }
+
+    private static void GoalsMenu()
+    {
+        var connectionStringSettings = ConfigurationManager.ConnectionStrings["DefaultConnection"];
+        var defaultConnection = connectionStringSettings.ConnectionString;
+        var goalsDb = new GoalsDb(defaultConnection);
+
+        string selection = Menu.DisplayGoalMenu();
+        switch (selection)
+        {
+            case "Add New Goal":
+                Console.WriteLine("add new goal");
+                break;
+            case "Edit Existing Goal":
+                Console.WriteLine("edit goal");
+                break;
+            case "Delete a Goal":
+                Console.WriteLine("delete goal");
+                break;
+            case "View all goals":
+                Menu.DisplayAllGoalRecords(goalsDb.GetAllRecords());
+                break;
+            case "View progress on Goals":
+                break;
+            case "Exit to Main Menu":
+                break;
         }
     }
 }

@@ -1,3 +1,4 @@
+using CodingTracker.A_Altemara.Models;
 using Spectre.Console;
 
 namespace CodingTracker.A_Altemara;
@@ -41,6 +42,23 @@ public static class Menu
                 .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
                 .AddChoices([
                     "Edit start time", "Edit Start Date", "Edit End time", "Edit End Date", "Exit Edit option"
+                ]));
+        return selection;
+    }
+    
+    public static string DisplayGoalMenu()
+    {
+        // uses Spectre to display console menu
+        Console.Clear();
+        AnsiConsole.Markup("[bold blue]Welcome to your Goals tracker![/]\n");
+        AnsiConsole.Markup("[blue]Please select from the following options[/]\n");
+        var selection = AnsiConsole.Prompt(
+            new SelectionPrompt<string>()
+                .Title("What's your Selection?")
+                .PageSize(5)
+                // .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
+                .AddChoices([
+                    "Add New Goal", "Edit Existing Goal", "Delete a Goal", "View all goals", "View progress on Goals", "Exit to Main Menu"
                 ]));
         return selection;
     }
@@ -132,7 +150,7 @@ public static class Menu
     /// Displays all session records in the console.
     /// </summary>
     /// <param name="sessions">A collection of session records to display.</param>
-    public static void DisplayAllRecords(IEnumerable<CodingSession> sessions)
+    public static void DisplayAllCodingSessionRecords(IEnumerable<CodingSession> sessions)
     {
         var table = new Table();
 
@@ -145,6 +163,29 @@ public static class Menu
                 session.StartTime.ToString("yyyy-MM-dd HH:mm:ss"),
                 session.EndTime.ToString("yyyy-MM-dd HH:mm:ss"),
                 session.Duration.ToString());
+        }
+
+        AnsiConsole.Write(table);
+        AnsiConsole.WriteLine("Press Enter to continue");
+    }
+    
+    /// <summary>
+    /// Displays all goal records in the console.
+    /// </summary>
+    /// <param name="goals">A collection of goal records to display.</param>
+    public static void DisplayAllGoalRecords(IEnumerable<CodingGoal> goals)
+    {
+        var table = new Table();
+
+        table.AddColumns(["Id", "Month", "Year", "Goal Hours"]);
+
+        foreach (var goal in goals)
+        {
+            table.AddRow(
+                goal.Id.ToString(),
+                goal.GoalMonth,
+                goal.GoalYear,
+                goal.GoalHours.ToString());
         }
 
         AnsiConsole.Write(table);
@@ -289,13 +330,13 @@ public static class Menu
     }
 
     /// <summary>
-    /// Prompts the user to enter a valid session ID from the provided collection of sessions.
+    /// Prompts the user to enter a valid session ID from the provided collection of entries.
     /// </summary>
-    /// <param name="CodingSession">A collection of session records to validate against.</param>
-    /// <returns>The valid session ID entered by the user, or null if the user exits.</returns>
-    public static string? GetValidSessionId(IEnumerable<CodingSession> sessions)
+    /// <param name="entries">A collection of entry records to validate against.</param>
+    /// <returns>The valid entry ID entered by the user, or null if the user exits.</returns>
+    public static string? GetValidId(IEnumerable<IEntry> entries)
     {
-        var sessionIdHash = sessions.Select(h => h.Id.ToString()).ToHashSet();
+        var sessionIdHash = entries.Select(h => h.Id.ToString()).ToHashSet();
         AnsiConsole.WriteLine("Enter the record ID or E to exit.");
         var id = Console.ReadLine()?.ToLower();
 
@@ -314,11 +355,28 @@ public static class Menu
 
         return id;
     }
+
+    public static void ShowProgressToGoal(TimeSpan goalHours, TimeSpan progress)
+    {
+        AnsiConsole.Write(new BreakdownChart()
+            .FullSize()
+            .AddItem("Progress", progress.TotalHours, Color.Green)
+            .AddItem("Goal", goalHours.TotalHours - progress.TotalHours, Color.Red));
+    }
+
+    public static void SetNewGoal()
+    {
+        throw new NotImplementedException();
+    }
 }
 
 // Stretch Goals
 //"Start new Coding session", 
 // "End Coding session",
-// "View Progress towards goal",
+// with the ongoing session can you do other things in the meantime or will it just default to end session.
+// maybe leave the end session as first option if stopwatch is running, then can add other sessions.
 // "Set new goal",
+// what kind of goals? total hours, hours by time period
 // "Edit existing goal"
+// "View Progress towards goal",
+// select the goal to view, can view all goals?
