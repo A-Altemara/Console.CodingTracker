@@ -6,11 +6,22 @@ namespace CodingTracker.A_Altemara.Menus;
 
 public static class Menu
 {
+    private static CodingDb _codingDb;
+    private static GoalsDb _goalsDb;
+
+    public static void Initialize()
+    {
+        var connectionStringSettings = ConfigurationManager.ConnectionStrings["DefaultConnection"];
+        var defaultConnection = connectionStringSettings.ConnectionString;
+        _codingDb = new CodingDb(defaultConnection);
+        _goalsDb = new GoalsDb(defaultConnection);
+    }
+    
     /// <summary>
-    /// Displays Main Menu
+    /// Displays Session Menu
     /// </summary>
     /// <returns>The selection as a string</returns>
-    public static string DisplayMainMenu()
+    private static string DisplaySessionMenu()
     {
         // uses Spectre to display console menu
         Console.Clear();
@@ -22,80 +33,104 @@ public static class Menu
                 .PageSize(5)
                 .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
                 .AddChoices([
-                    "Add New", "Edit Existing", "Delete a Coding Session", "View all Sessions", "View Goals Menu",
-                    "Exit Program"
+                    "Add New", "Edit Existing", "Delete a Coding Session", "View all Sessions",
+                    "Exit to Main Menu"
                 ]));
         return selection;
     }
 
     /// <summary>
-    /// Prompts the user to enter a valid time.
+    /// Displays a menu and allows the user to view, add, edit, or delete coding session records.
     /// </summary>
-    /// <returns>The valid time entered by the user, or null if the user exits.</returns>
-    public static TimeOnly? GetValidTime()
+    public static void SessionsMainMenu()
     {
-        var timePrompt = new TextPrompt<string>("Enter the time to log (HH:mm) or 'e' to Exit: ")
-            .Validate(input =>
-            {
-                if (input.Equals("e", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    return ValidationResult.Success();
-                }
-
-                if (TimeOnly.TryParse(input, out TimeOnly time))
-                {
-                    return ValidationResult.Success();
-                }
-
-                return ValidationResult.Error("Invalid time format");
-            });
-
-        string time = AnsiConsole.Prompt(timePrompt);
-
-        if (time == "e")
+        var continueProgram = true;
+        while (continueProgram)
         {
-            return null;
+            string selection = DisplaySessionMenu();
+            switch (selection)
+            {
+                case "Exit to Main Menu":
+                    continueProgram = false;
+                    AnsiConsole.WriteLine("Exited Session Menu");
+                    break;
+                case "Add New":
+                    SessionMenu.AddNewEntry(_codingDb);
+                    break;
+                case "Edit Existing":
+                    EditEntry(_codingDb);
+                    break;
+                case "View all Sessions":
+                    ViewRecords(_codingDb);
+                    Console.ReadLine();
+                    break;
+                case "Delete a Coding Session":
+                    DeleteEntry(_codingDb);
+                    break;
+                default:
+                    AnsiConsole.WriteLine("Invalid selection press Enter to try again");
+                    Console.ReadLine();
+                    break;
+            }
         }
-
-        var timePart = TimeOnly.Parse(time);
-        return timePart;
+    }
+    
+    /// <summary>
+    /// Displays Goals Menu
+    /// </summary>
+    /// <returns>The selection as a string</returns>
+    private static string DisplayGoalMenu()
+    {
+        // uses Spectre to display console menu
+        Console.Clear();
+        AnsiConsole.Markup("[bold purple]Welcome to your Goals tracker![/]\n");
+        AnsiConsole.Markup("[purple]Please select from the following options[/]\n");
+        var selection = AnsiConsole.Prompt(
+            new SelectionPrompt<string>()
+                .Title("What's your Selection?")
+                .PageSize(5)
+                // .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
+                .AddChoices([
+                    "Add New Goal", "Edit Existing Goal", "Delete a Goal", "View a goal", "View progress on Goals",
+                    "Exit to Main Menu"
+                ]));
+        return selection;
     }
 
     /// <summary>
-    /// Prompts the user to enter a valid date.
+    /// Displays a menu and allows the user to view, add, edit, or delete coding goal records.
     /// </summary>
-    /// <returns>The valid date entered by the user, or null if the user exits.</returns>
-    public static DateOnly? GetValidDate()
+    public static void GoalsMainMenu()
     {
-        // Supported date formats for Coding entries.
-        string[] dateFormats = ["MM-dd-yyyy", "dd-MM-yyyy", "yyyy-MM-dd"];
-
-        var datePrompt = new TextPrompt<string>("Enter the Date to log (YYYY-MM-DD) or 'e' to exit: ")
-            .Validate(input =>
-            {
-                if (input.Equals("e", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    return ValidationResult.Success();
-                }
-
-                if (DateTime.TryParseExact(input, dateFormats, null, System.Globalization.DateTimeStyles.None,
-                        out DateTime date))
-                {
-                    return ValidationResult.Success();
-                }
-
-                return ValidationResult.Error("Invalid date format");
-            });
-
-        string date = AnsiConsole.Prompt(datePrompt);
-
-        if (date == "e")
+        while (true)
         {
-            return null;
+            string selection = DisplayGoalMenu();
+            switch (selection)
+            {
+                case "Add New Goal":
+                    GoalsMenu.AddNewEntry(_goalsDb);
+                    break;
+                case "Edit Existing Goal":
+                    EditEntry(_goalsDb);
+                    break;
+                case "Delete a Goal":
+                    DeleteEntry(_goalsDb);
+                    break;
+                case "View a goal":
+                    var goal = GoalsMenu.GetGoal(_goalsDb);
+                    var sessions = _codingDb.GetTotalCodingHours(goal);
+                    GoalsMenu.ShowProgressToGoal(goal, sessions);
+                    Console.ReadLine();
+                    break;
+                case "View progress on Goals":
+                    Console.WriteLine("view progress on goal, press enter to continue");
+                    Console.ReadLine();
+                    break;
+                case "Exit to Main Menu":
+                    AnsiConsole.WriteLine("Exiting to Main menu, press enter to continue");
+                    return;
+            }
         }
-
-        DateOnly datePart = DateOnly.ParseExact(date, dateFormats);
-        return datePart;
     }
 
     /// <summary>
@@ -124,14 +159,13 @@ public static class Menu
 
         return id;
     }
-
-
+    
     /// <summary>
     /// Deletes a session record from the database.
     /// Prompts the user to select a record to delete.
     /// </summary>
     /// <param name="codingTrackerDb">The database connection to use.</param>
-    public static void DeleteEntry<T>(ICodingTrackerDb<T> codingTrackerDb) where T : IEntry
+    private static void DeleteEntry<T>(ICodingTrackerDb<T> codingTrackerDb) where T : IEntry
     {
         var entries = ViewRecords(codingTrackerDb);
         var sessionId = GetValidId(entries);
@@ -168,9 +202,11 @@ public static class Menu
                 return [..sessions];
             }
             case GoalsDb goalsDb:
+            {
                 var goals = goalsDb.GetAllRecords();
                 GoalsMenu.DisplayAllGoalRecords(goals);
                 return [..goals];
+            }
             default:
                 throw new NotImplementedException();
         }
@@ -181,7 +217,7 @@ public static class Menu
     /// Displays the current records and allows the user to select a record to edit.
     /// </summary>
     /// <param name="codingTrackerDb">The database connection to use.</param>
-    public static void EditEntry<T>(ICodingTrackerDb<T> codingTrackerDb) where T : IEntry
+    private static void EditEntry<T>(ICodingTrackerDb<T> codingTrackerDb) where T : IEntry
     {
         var entries = ViewRecords(codingTrackerDb);
         var idString = GetValidId(entries);
@@ -222,41 +258,18 @@ public static class Menu
             if (goalsDb.Update(updatedSession))
             {
                 AnsiConsole.WriteLine("Record updated, press enter to continue");
-                Console.ReadLine();
             }
             else
             {
                 AnsiConsole.WriteLine("Unable to update record, press enter to continue");
-                Console.ReadLine();
             }
         }
         else
         {
             throw new NotImplementedException();
         }
-
-
-        // // var success = codingDb.UpdateSession(updatedSession);
-        // if (codingTrackerDb.Update(updatedEntry))
-        // {
-        //     AnsiConsole.WriteLine("Record updated, press enter to continue");
-        //     Console.ReadLine();
-        // }
-        // else
-        // {
-        //     AnsiConsole.WriteLine("Unable to update record, press enter to continue");
-        //     Console.ReadLine();
-        // }
     }
-}
+    
+    
 
-// Stretch Goals
-//"Start new Coding session", 
-// "End Coding session",
-// with the ongoing session can you do other things in the meantime or will it just default to end session.
-// maybe leave the end session as first option if stopwatch is running, then can add other sessions.
-// "Set new goal",
-// what kind of goals? total hours, hours by time period
-// "Edit existing goal"
-// "View Progress towards goal",
-// select the goal to view, can view all goals?
+}

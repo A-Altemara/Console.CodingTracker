@@ -1,4 +1,5 @@
 using System.Configuration;
+using System.Globalization;
 using CodingTracker.A_Altemara.Models;
 using Spectre.Console;
 
@@ -6,58 +7,6 @@ namespace CodingTracker.A_Altemara.Menus;
 
 public static class GoalsMenu
 {
-    public static string DisplayGoalMenu()
-    {
-        // uses Spectre to display console menu
-        Console.Clear();
-        AnsiConsole.Markup("[bold purple]Welcome to your Goals tracker![/]\n");
-        AnsiConsole.Markup("[purple]Please select from the following options[/]\n");
-        var selection = AnsiConsole.Prompt(
-            new SelectionPrompt<string>()
-                .Title("What's your Selection?")
-                .PageSize(5)
-                // .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
-                .AddChoices([
-                    "Add New Goal", "Edit Existing Goal", "Delete a Goal", "View all goals", "View progress on Goals",
-                    "Exit to Main Menu"
-                ]));
-        return selection;
-    }
-
-    public static void GoalsMainMenu()
-    {
-        var connectionStringSettings = ConfigurationManager.ConnectionStrings["DefaultConnection"];
-        var defaultConnection = connectionStringSettings.ConnectionString;
-        var goalsDb = new GoalsDb(defaultConnection);
-        while (true)
-        {
-            string selection = DisplayGoalMenu();
-            switch (selection)
-            {
-                case "Add New Goal":
-                    AddNewEntry(goalsDb);
-                    break;
-                case "Edit Existing Goal":
-                    Menu.EditEntry(goalsDb);
-                    break;
-                case "Delete a Goal":
-                    Menu.DeleteEntry(goalsDb);
-                    break;
-                case "View all goals":
-                    Menu.ViewRecords(goalsDb);
-                    Console.ReadLine();
-                    break;
-                case "View progress on Goals":
-                    Console.WriteLine("view progress on goal, press enter to continue");
-                    Console.ReadLine();
-                    break;
-                case "Exit to Main Menu":
-                    AnsiConsole.WriteLine("Exiting to Main menu, press enter to continue");
-                    return;
-            }
-        }
-    }
-
     /// <summary>
     /// Displays all goal records in the console.
     /// </summary>
@@ -81,7 +30,11 @@ public static class GoalsMenu
         AnsiConsole.WriteLine("Press Enter to continue");
     }
 
-    public static CodingGoal? NewGoal()
+    /// <summary>
+    /// Prompts the user to add a new goal record and returns the created goal.
+    /// </summary>
+    /// <returns>A new <see cref="CodingGoal"/> object if the user completes the input, otherwise null if the user exits.</returns>
+    private static CodingGoal? NewGoal()
     {
         var goalMonth = GetValidMonth();
         var goalYear = GetValidYear();
@@ -169,23 +122,57 @@ public static class GoalsMenu
         Console.ReadLine();
     }
 
-
-    public static void ShowProgressToGoal(TimeSpan goalHours, TimeSpan progress)
+    public static CodingGoal? GetGoal(GoalsDb goalsDb)
     {
-        AnsiConsole.Write(new BreakdownChart()
-            .FullSize()
-            .AddItem("Progress", progress.TotalHours, Color.Green)
-            .AddItem("Goal", goalHours.TotalHours - progress.TotalHours, Color.Red));
+        var goals = Menu.ViewRecords(goalsDb);
+        var id = Menu.GetValidId(goals);
+        if (id is null)
+        {
+            return null;
+        }
+
+        var goal = goals.First(g => g.Id.ToString() == id) as CodingGoal;
+
+        return goal;
+    }
+
+    public static void ShowProgressToGoal(CodingGoal codingGoal, List<CodingSession> sessions)
+    {
+        var totalCodingHours = sessions.Sum(s => s.Duration.TotalHours);
+        if (totalCodingHours == 0)
+        {
+            AnsiConsole.Write(new BreakdownChart()
+                .FullSize()
+                .AddItem("UnMet Goal", Math.Round((double)codingGoal.GoalHours, 2), Color.Red));
+        }
+        else if (codingGoal.GoalHours - totalCodingHours > 0)
+        {
+            AnsiConsole.Write(new BreakdownChart()
+                .FullSize()
+                .AddItem("Progress", totalCodingHours, Color.Green)
+                .AddItem("Goal", Math.Round(codingGoal.GoalHours - totalCodingHours, 2) - totalCodingHours, Color.Red));
+        }
+        else if (codingGoal.GoalHours - totalCodingHours <= 0)
+        {
+            AnsiConsole.Write(new BreakdownChart()
+                .FullSize()
+                .AddItem("Progress", codingGoal.GoalHours, Color.Green)
+                .AddItem("Exceeded Goal", Math.Round(totalCodingHours - codingGoal.GoalHours, 2), Color.Blue));
+        }
+        else
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public static CodingGoal UpdateGoal(CodingGoal goal)
     {
         var selection = EditMenu();
-        
+
         switch (selection)
         {
             case "Month":
-                goal.GoalMonth =GetValidMonth();
+                goal.GoalMonth = GetValidMonth();
                 break;
             case "Year":
                 goal.GoalYear = GetValidYear();
@@ -198,7 +185,7 @@ public static class GoalsMenu
         return goal;
     }
 
-    public static string EditMenu()
+    private static string EditMenu()
     {
         Console.Clear();
         AnsiConsole.Markup("[blue]Please select from the following options[/]\n");

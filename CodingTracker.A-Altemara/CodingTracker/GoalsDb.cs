@@ -72,6 +72,16 @@ public class GoalsDb : ICodingTrackerDb<CodingGoal>
         }
     }
 
+    /// <summary>
+    /// Retrieves all coding goal records from the database.
+    /// </summary>
+    /// <returns>
+    /// A list of <see cref="CodingGoal"/> objects representing all coding goals stored in the database.
+    /// </returns>
+    /// <remarks>
+    /// This method uses Dapper to execute a query that selects the <c>Id</c>, <c>GoalMonth</c>, <c>GoalYear</c>, 
+    /// and <c>GoalHours</c> fields from the <c>GoalsTrackerTable</c> and maps them to a list of <see cref="CodingGoal"/> objects.
+    /// </remarks>
     public List<CodingGoal> GetAllRecords()
     {
         var sessions =
@@ -80,6 +90,11 @@ public class GoalsDb : ICodingTrackerDb<CodingGoal>
         return sessions;
     }
 
+    /// <summary>
+    /// Deletes a goal record from the "GoalsTrackerTable" table by its ID.
+    /// </summary>
+    /// <param name="id">The ID of the goal record to delete.</param>
+    /// <returns><c>true</c> if the record was deleted successfully; otherwise, <c>false</c>.</returns>
     public bool Delete(string id)
     {
         try
@@ -94,6 +109,10 @@ public class GoalsDb : ICodingTrackerDb<CodingGoal>
         }
     }
 
+    /// <summary>
+    /// Adds a new goal record to the "GoalsTrackerTable" table.
+    /// </summary>
+    /// <param name="codingGoal">The goal record to add.</param>
     public void Add(CodingGoal codingGoal)
     {
         string insertQuery =
@@ -102,6 +121,11 @@ public class GoalsDb : ICodingTrackerDb<CodingGoal>
         _dbConnection.Execute(insertQuery, codingGoal);
     }
 
+    /// <summary>
+    /// Updates an existing goal record in the "GoalsTrackerTable" table.
+    /// </summary>
+    /// <param name="codingGoal">The goal record to update.</param>
+    /// <returns><c>true</c> if the record was updated successfully; otherwise, <c>false</c>.</returns>
     public bool Update(CodingGoal codingGoal)
     {
         string updateQuery = "UPDATE GoalsTrackerTable " +

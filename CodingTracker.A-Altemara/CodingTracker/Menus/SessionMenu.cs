@@ -48,7 +48,7 @@ public static class SessionMenu
             {
                 case "Edit start time":
                     AnsiConsole.WriteLine("\nEditing the Start Time");
-                    var newStartTime = Menu.GetValidTime();
+                    var newStartTime = GetValidTime();
                     if (newStartTime == null)
                     {
                         return null;
@@ -59,7 +59,7 @@ public static class SessionMenu
                     break;
                 case "Edit Start Date":
                     AnsiConsole.WriteLine("\nEditing the Start Date");
-                    var newStartDate = Menu.GetValidDate();
+                    var newStartDate = GetValidDate();
                     if (newStartDate == null)
                     {
                         return null;
@@ -70,7 +70,7 @@ public static class SessionMenu
                     break;
                 case "Edit End time":
                     AnsiConsole.WriteLine("\nEditing the Coding End time");
-                    var newEndTime = Menu.GetValidTime();
+                    var newEndTime = GetValidTime();
                     if (newEndTime == null)
                     {
                         return null;
@@ -81,7 +81,7 @@ public static class SessionMenu
                     break;
                 case "Edit End Date":
                     AnsiConsole.WriteLine("\nEditing the Coding End Date");
-                    var newEndDate = Menu.GetValidDate();
+                    var newEndDate = GetValidDate();
                     if (newEndDate == null)
                     {
                         return null;
@@ -135,21 +135,21 @@ public static class SessionMenu
     /// Prompts the user to add a new session record and returns the created session.
     /// </summary>
     /// <returns>A new <see cref="CodingSession"/> object if the user completes the input, otherwise null if the user exits.</returns>
-    public static CodingSession? NewSession()
+    private static CodingSession? NewSession()
     {
         var startDateTime = DateTime.MinValue;
         var endDateTime = DateTime.MinValue;
         while (endDateTime <= startDateTime || (endDateTime - startDateTime).TotalHours > 24)
         {
             AnsiConsole.Markup("[bold blue]Start Time[/]\n");
-            var startDateValue = Menu.GetValidDate();
+            var startDateValue = GetValidDate();
             if (startDateValue == null)
             {
                 return null;
             }
 
             AnsiConsole.Markup("[bold blue]Start time[/]\n");
-            var startClock = Menu.GetValidTime();
+            var startClock = GetValidTime();
             if (startClock == null)
             {
                 return null;
@@ -158,14 +158,14 @@ public static class SessionMenu
             startDateTime = startDateValue.Value.ToDateTime(startClock.Value);
 
             AnsiConsole.Markup("[bold blue]End Time[/]\n");
-            var endDate = Menu.GetValidDate();
+            var endDate = GetValidDate();
             if (endDate == null)
             {
                 return null;
             }
 
             AnsiConsole.Markup("[bold blue]End time[/]\n");
-            var endClock = Menu.GetValidTime();
+            var endClock = GetValidTime();
             if (endClock == null)
             {
                 return null;
@@ -214,4 +214,76 @@ public static class SessionMenu
         AnsiConsole.WriteLine($"You have add a coding session lasting {newSession.Duration}. Press enter to continue");
         Console.ReadLine();
     }
+    
+     /// <summary>
+    /// Prompts the user to enter a valid time.
+    /// </summary>
+    /// <returns>The valid time entered by the user, or null if the user exits.</returns>
+    private static TimeOnly? GetValidTime()
+    {
+        var timePrompt = new TextPrompt<string>("Enter the time to log (HH:mm) or 'e' to Exit: ")
+            .Validate(input =>
+            {
+                if (input.Equals("e", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return ValidationResult.Success();
+                }
+
+                if (TimeOnly.TryParse(input, out TimeOnly time))
+                {
+                    return ValidationResult.Success();
+                }
+
+                return ValidationResult.Error("Invalid time format");
+            });
+
+        string time = AnsiConsole.Prompt(timePrompt);
+
+        if (time == "e")
+        {
+            return null;
+        }
+
+        var timePart = TimeOnly.Parse(time);
+        return timePart;
+    }
+
+    /// <summary>
+    /// Prompts the user to enter a valid date.
+    /// </summary>
+    /// <returns>The valid date entered by the user, or null if the user exits.</returns>
+    private static DateOnly? GetValidDate()
+    {
+        // Supported date formats for Coding entries.
+        string[] dateFormats = ["MM-dd-yyyy", "dd-MM-yyyy", "yyyy-MM-dd"];
+
+        var datePrompt = new TextPrompt<string>("Enter the Date to log (YYYY-MM-DD) or 'e' to exit: ")
+            .Validate(input =>
+            {
+                if (input.Equals("e", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return ValidationResult.Success();
+                }
+
+                if (DateTime.TryParseExact(input, dateFormats, null, System.Globalization.DateTimeStyles.None,
+                        out DateTime date))
+                {
+                    return ValidationResult.Success();
+                }
+
+                return ValidationResult.Error("Invalid date format");
+            });
+
+        string date = AnsiConsole.Prompt(datePrompt);
+
+        if (date == "e")
+        {
+            return null;
+        }
+
+        DateOnly datePart = DateOnly.ParseExact(date, dateFormats);
+        return datePart;
+    }
+
+   
 }

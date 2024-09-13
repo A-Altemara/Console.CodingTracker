@@ -91,6 +91,16 @@ public class CodingDb : ICodingTrackerDb<CodingSession>
         }
     }
 
+    /// <summary>
+    /// Retrieves all coding session records from the database.
+    /// </summary>
+    /// <returns>
+    /// A list of <see cref="CodingSession"/> objects representing all coding sessions stored in the database.
+    /// </returns>
+    /// <remarks>
+    /// This method uses Dapper to execute a query that selects the <c>Id</c>, <c>StartTime</c>, <c>EndTime</c>, 
+    /// and <c>Duration</c> fields from the <c>CodeTrackerTable</c> and maps them to a list of <see cref="CodingSession"/> objects.
+    /// </remarks>
     public List<CodingSession> GetAllRecords()
     {
         var sessions =
@@ -205,6 +215,17 @@ public class CodingDb : ICodingTrackerDb<CodingSession>
         {
             return false;
         }
+    }
+    
+    public List<CodingSession> GetTotalCodingHours(CodingGoal codingGoal)
+    {
+        double totalCodingHours = 0;
+        var codingGoalDate = codingGoal.GetFormatedDate();
+        var sessions =
+            _dbConnection.Query<CodingSession>(
+                    $"SELECT * FROM CodeTrackerTable WHERE strftime('%Y-%m', StartTime) = '{codingGoalDate}'")
+            .ToList();
+        return sessions;
     }
 }
 

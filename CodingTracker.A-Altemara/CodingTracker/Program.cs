@@ -16,44 +16,44 @@ public static class Program
     /// </summary>
     static void Main(string[] args)
     {
+        Menu.Initialize();
         var continueProgram = true;
 
-        var connectionStringSettings = ConfigurationManager.ConnectionStrings["DefaultConnection"];
-        var defaultConnection = connectionStringSettings.ConnectionString;
-        var codingDb = new CodingDb(defaultConnection);
-
         // SpectreTest.RunSpectre();
-
         while (continueProgram)
         {
-            string selection = Menu.DisplayMainMenu();
+            Console.Clear();
+
+            AnsiConsole.Markup("[bold blue]Welcome to Coding and Goals Tracker![/]\n");
+            AnsiConsole.Markup("[blue]Please select from the following options[/]\n");
+            var selection = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("What's your Selection?")
+                    .PageSize(5)
+                    .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
+                    .AddChoices([
+                        "View Coding Session Menu", "View Goals Menu", "Exit Program"
+                    ]));
+
             switch (selection)
             {
-                case "Exit Program":
-                    continueProgram = false;
-                    AnsiConsole.WriteLine("Exited Program");
-                    break;
-                case "Add New":
-                    SessionMenu.AddNewEntry(codingDb);
-                    break;
-                case "Edit Existing":
-                    Menu.EditEntry(codingDb);
-                    break;
-                case "View all Sessions":
-                    Menu.ViewRecords(codingDb);
-                    Console.ReadLine();
-                    break;
-                case "Delete a Coding Session":
-                    Menu.DeleteEntry(codingDb);
+                case "View Coding Session Menu":
+                    Menu.SessionsMainMenu();
                     break;
                 case "View Goals Menu":
-                    GoalsMenu.GoalsMainMenu();
+                    Menu.GoalsMainMenu();
                     break;
-                default:
-                    AnsiConsole.WriteLine("Invalid selection press Enter to try again");
-                    Console.ReadLine();
+                case "Exit Program":
+                    continueProgram = false;
+                    Console.WriteLine("Exited Program");
                     break;
             }
         }
     }
 }
+
+// Stretch Goals
+//"Start new Coding session", 
+// "End Coding session",
+// with the ongoing session can you do other things in the meantime or will it just default to end session.
+// maybe leave the end session as first option if stopwatch is running, then can add other sessions.
