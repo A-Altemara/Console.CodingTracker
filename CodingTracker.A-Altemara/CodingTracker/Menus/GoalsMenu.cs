@@ -38,8 +38,7 @@ public static class GoalsMenu
                     AddNewEntry(goalsDb);
                     break;
                 case "Edit Existing Goal":
-                    Console.WriteLine("edit goal");
-                    Console.ReadLine();
+                    Menu.EditEntry(goalsDb);
                     break;
                 case "Delete a Goal":
                     Menu.DeleteEntry(goalsDb);
@@ -49,6 +48,7 @@ public static class GoalsMenu
                     Console.ReadLine();
                     break;
                 case "View progress on Goals":
+                    Console.WriteLine("view progress on goal, press enter to continue");
                     Console.ReadLine();
                     break;
                 case "Exit to Main Menu":
@@ -176,5 +176,40 @@ public static class GoalsMenu
             .FullSize()
             .AddItem("Progress", progress.TotalHours, Color.Green)
             .AddItem("Goal", goalHours.TotalHours - progress.TotalHours, Color.Red));
+    }
+
+    public static CodingGoal UpdateGoal(CodingGoal goal)
+    {
+        var selection = EditMenu();
+        
+        switch (selection)
+        {
+            case "Month":
+                goal.GoalMonth =GetValidMonth();
+                break;
+            case "Year":
+                goal.GoalYear = GetValidYear();
+                break;
+            case "Hours":
+                goal.GoalHours = GetValidHours();
+                break;
+        }
+
+        return goal;
+    }
+
+    public static string EditMenu()
+    {
+        Console.Clear();
+        AnsiConsole.Markup("[blue]Please select from the following options[/]\n");
+        var selection = AnsiConsole.Prompt(
+            new SelectionPrompt<string>()
+                .Title("Please select a month?")
+                .PageSize(5)
+                // .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
+                .AddChoices([
+                    "Month", "Year", "Hours"
+                ]));
+        return selection;
     }
 }

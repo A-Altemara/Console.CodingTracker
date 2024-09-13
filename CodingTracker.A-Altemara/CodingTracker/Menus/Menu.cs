@@ -213,7 +213,22 @@ public static class Menu
         }
         else if (codingTrackerDb is GoalsDb goalsDb)
         {
-            throw new NotImplementedException();
+            var updatedSession = GoalsMenu.UpdateGoal((entry as CodingGoal)!);
+            if (updatedSession is null)
+            {
+                return;
+            }
+
+            if (goalsDb.Update(updatedSession))
+            {
+                AnsiConsole.WriteLine("Record updated, press enter to continue");
+                Console.ReadLine();
+            }
+            else
+            {
+                AnsiConsole.WriteLine("Unable to update record, press enter to continue");
+                Console.ReadLine();
+            }
         }
         else
         {
