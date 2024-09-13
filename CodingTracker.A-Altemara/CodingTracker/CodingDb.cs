@@ -91,7 +91,7 @@ public class CodingDb : ICodingTrackerDb<CodingSession>
         }
     }
 
-     public List<CodingSession> GetAllRecords()
+    public List<CodingSession> GetAllRecords()
     {
         var sessions =
             _dbConnection.Query<CodingSession>("SELECT Id, StartTime, EndTime, Duration FROM CodeTrackerTable")

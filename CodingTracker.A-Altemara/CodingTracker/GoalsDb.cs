@@ -8,7 +8,7 @@ namespace CodingTracker.A_Altemara;
 /// <summary>
 /// Represents a database handler for code session tracking, using SQLite as the database engine.
 /// </summary>
-public class GoalsDb
+public class GoalsDb : ICodingTrackerDb<CodingGoal>
 {
     private static readonly Random Random = new();
     private readonly SQLiteConnection _dbConnection;
@@ -50,34 +50,72 @@ public class GoalsDb
         {
             var createTableQuery = "CREATE TABLE GoalsTrackerTable " +
                                    "(Id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                                   "GoalMonth TEXT NOT NULL " +
-                                   "GoalYear INT NOT NUll" +
-                                   "GoalTimeSpan TEXT NOT NULL " ;
+                                   "GoalMonth TEXT NOT NULL, " +
+                                   "GoalYear INT NOT NUll, " +
+                                   "GoalHours TEXT NOT NULL)";
 
             using (SQLiteCommand command = new(createTableQuery, _dbConnection))
             {
                 command.ExecuteNonQuery();
             }
-            
+
             string goalName = "September";
             int goalYear = 2024;
-            string goalTimeSpan = "01:00";
+            int goalHours = 1;
 
-            string insertQuery = $"INSERT INTO GoalsTrackerTable (GoalMonth, GoalYear, GoalTimeSpan) VALUES ('{goalName}','{goalYear}', '{goalTimeSpan}')";
+            string insertQuery =
+                $"INSERT INTO GoalsTrackerTable (GoalMonth, GoalYear, GoalHours) VALUES ('{goalName}','{goalYear}', '{goalHours}')";
             using (SQLiteCommand command = new(insertQuery, _dbConnection))
             {
                 command.ExecuteNonQuery();
             }
         }
-
     }
-    
+
     public List<CodingGoal> GetAllRecords()
     {
         var sessions =
-            _dbConnection.Query<CodingGoal>("SELECT Id, GoalMonth, GoalYear, GoalTimeSpan FROM GoalTrackerTable")
+            _dbConnection.Query<CodingGoal>("SELECT Id, GoalMonth, GoalYear, GoalHours FROM GoalsTrackerTable")
                 .ToList();
         return sessions;
     }
-    
+
+    public bool Delete(string id)
+    {
+        try
+        {
+            _dbConnection.QueryFirstOrDefault<CodingGoal>("DELETE FROM GoalsTrackerTable WHERE Id = @Id",
+                new { Id = id });
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public void Add(CodingGoal codingGoal)
+    {
+        string insertQuery =
+            "INSERT INTO GoalsTrackerTable (GoalMonth, GoalYear, GoalHours) VALUES (@GoalMonth, @GoalYear, @GoalHours);";
+
+        _dbConnection.Execute(insertQuery, codingGoal);
+    }
+
+    public bool Update(CodingGoal codingGoal)
+    {
+        string updateQuery = "UPDATE GoalsTrackerTable " +
+                             "SET GoalMonth = @GoalMonth, GoalYear = @GoalYear, GoalHours = @GoalHours " +
+                             "WHERE Id = @Id;";
+
+        try
+        {
+            _dbConnection.Execute(updateQuery, codingGoal);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

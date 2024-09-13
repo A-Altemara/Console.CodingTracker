@@ -26,7 +26,7 @@ public static class Program
 
         while (continueProgram)
         {
-            string selection = Menu.DisplayMenu();
+            string selection = Menu.DisplayMainMenu();
             switch (selection)
             {
                 case "Exit Program":
@@ -48,7 +48,6 @@ public static class Program
                     break;
                 case "View Goals Menu":
                     GoalsMenu.GoalsMainMenu();
-                    Console.ReadLine();
                     break;
                 default:
                     AnsiConsole.WriteLine("Invalid selection press Enter to try again");

@@ -10,7 +10,7 @@ public static class Menu
     /// Displays Main Menu
     /// </summary>
     /// <returns>The selection as a string</returns>
-    public static string DisplayMenu()
+    public static string DisplayMainMenu()
     {
         // uses Spectre to display console menu
         Console.Clear();
@@ -22,7 +22,8 @@ public static class Menu
                 .PageSize(5)
                 .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
                 .AddChoices([
-                    "Add New", "Edit Existing", "Delete a Coding Session", "View all Sessions", "Exit Program"
+                    "Add New", "Edit Existing", "Delete a Coding Session", "View all Sessions", "View Goals Menu",
+                    "Exit Program"
                 ]));
         return selection;
     }
@@ -133,7 +134,7 @@ public static class Menu
     public static void DeleteEntry<T>(ICodingTrackerDb<T> codingTrackerDb) where T : IEntry
     {
         var entries = ViewRecords(codingTrackerDb);
-        var sessionId = Menu.GetValidId(entries);
+        var sessionId = GetValidId(entries);
         if (sessionId is null)
         {
             return;
@@ -166,9 +167,10 @@ public static class Menu
                 SessionMenu.DisplayAllCodingSessionRecords(sessions);
                 return [..sessions];
             }
-            case GoalsDb:
-                // TODO implement displayGoals
-                throw new NotImplementedException();
+            case GoalsDb goalsDb:
+                var goals = goalsDb.GetAllRecords();
+                GoalsMenu.DisplayAllGoalRecords(goals);
+                return [..goals];
             default:
                 throw new NotImplementedException();
         }
@@ -182,7 +184,7 @@ public static class Menu
     public static void EditEntry<T>(ICodingTrackerDb<T> codingTrackerDb) where T : IEntry
     {
         var entries = ViewRecords(codingTrackerDb);
-        var idString = Menu.GetValidId(entries);
+        var idString = GetValidId(entries);
         if (idString == null)
         {
             return;
@@ -209,11 +211,15 @@ public static class Menu
                 Console.ReadLine();
             }
         }
+        else if (codingTrackerDb is GoalsDb goalsDb)
+        {
+            throw new NotImplementedException();
+        }
         else
         {
             throw new NotImplementedException();
         }
-        
+
 
         // // var success = codingDb.UpdateSession(updatedSession);
         // if (codingTrackerDb.Update(updatedEntry))
