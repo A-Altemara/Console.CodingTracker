@@ -5,13 +5,13 @@ This is a console application that allows users to track and manage their coding
 ## Description
 
 - SQLite Database: The application creates a SQLite database if one doesn't exist and creates a table to store habit data.
-- Menu Options: The application presents a menu to the user with options to insert a habit, delete a habit, update a habit, view all habits, generate a report, and exit the application.
 - Error Handling: The application handles possible errors to ensure it doesn't crash and provides appropriate error messages to the user.
+- Menu Options: The application presents a menu to the user with options to Select Coding Menu or Goals Menu
+  - The Coding Menu presents a menu to the user with options to insert a session, delete a session, update a session, view all session, and exit to the main menu.
+  - The Goals Menu presents a menu to the user with options to insert a goal, delete a goal, update a goal, view a single goal, view all goal, and exit to the main menu.
 - Termination: The application continues to run until the user chooses the "Exit" option.
 - The application interacts with the database using Dapper ORM.
 - Display on the console using Spector
-- Update times: Users can update the individual logged coding times.
-- Exit options: User can exit current selection to return to main menu
 
 ## Dependancies
 
