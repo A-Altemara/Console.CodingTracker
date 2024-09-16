@@ -50,6 +50,11 @@ public static class GoalsMenu
         return newSession;
     }
 
+    /// <summary>
+    /// Asks the user to input a valid number of hours for a goal. 
+    /// The input is validated to ensure it is a positive integer.
+    /// </summary>
+    /// <returns>An integer representing the valid number of hours.</returns>
     private static int GetValidHours()
     {
         var selection = 0;
@@ -65,6 +70,11 @@ public static class GoalsMenu
         return selection;
     }
 
+    /// <summary>
+    /// Prompts the user to select a valid year from the current year or a surrounding range of years.
+    /// Ensures the user input is a valid integer.
+    /// </summary>
+    /// <returns>An integer representing the selected year.</returns>
     private static int GetValidYear()
     {
         Console.Clear();
@@ -93,6 +103,10 @@ public static class GoalsMenu
         return year;
     }
 
+    /// <summary>
+    /// Prompts the user to select a valid month from a list of months.
+    /// </summary>
+    /// <returns>A string representing the selected month.</returns>
     private static string GetValidMonth()
     {
         Console.Clear();
@@ -109,6 +123,11 @@ public static class GoalsMenu
         return selection;
     }
 
+    /// <summary>
+    /// Adds a new coding goal entry to the database.
+    /// Prompts the user for details and saves the goal.
+    /// </summary>
+    /// <param name="goalsDb">The database instance where the goal will be saved.</param>
     public static void AddNewEntry(GoalsDb goalsDb)
     {
         var newSession = NewGoal();
@@ -122,6 +141,11 @@ public static class GoalsMenu
         Console.ReadLine();
     }
 
+    /// <summary>
+    /// Retrieves a specific coding goal from the database based on user input.
+    /// </summary>
+    /// <param name="goalsDb">The database instance to retrieve the goal from.</param>
+    /// <returns>A <see cref="CodingGoal"/> object if found; otherwise, null.</returns>
     public static CodingGoal? GetGoal(GoalsDb goalsDb)
     {
         var goals = Menu.ViewRecords(goalsDb);
@@ -136,6 +160,11 @@ public static class GoalsMenu
         return goal;
     }
 
+    /// <summary>
+    /// Displays the progress towards a coding goal, showing total hours coded compared to the goal.
+    /// </summary>
+    /// <param name="codingGoal">The goal to display progress for.</param>
+    /// <param name="sessions">A list of coding sessions used to calculate total progress.</param>
     public static void ShowProgressToGoal(CodingGoal codingGoal, List<CodingSession> sessions)
     {
         var totalCodingHours = Math.Round(sessions.Sum(s => s.Duration.TotalHours), 2);
@@ -147,10 +176,15 @@ public static class GoalsMenu
             .CenterLabel()
             .AddItem("Current Progress", totalCodingHours, Color.Green)
             .AddItem("Goal Hours", currentProgress, Color.Red);
-            
+
         AnsiConsole.Write(chart);
     }
 
+    /// <summary>
+    /// Updates the specified <see cref="CodingGoal"/> with new values for month, year, or hours.
+    /// </summary>
+    /// <param name="goal">The coding goal to update.</param>
+    /// <returns>The updated <see cref="CodingGoal"/> object.</returns>
     public static CodingGoal UpdateGoal(CodingGoal goal)
     {
         var selection = EditMenu();
@@ -171,6 +205,10 @@ public static class GoalsMenu
         return goal;
     }
 
+    /// <summary>
+    /// Displays a menu to allow the user to select an option to edit the goal (Month, Year, or Hours).
+    /// </summary>
+    /// <returns>A string representing the selected field to edit.</returns>
     private static string EditMenu()
     {
         Console.Clear();
@@ -179,7 +217,6 @@ public static class GoalsMenu
             new SelectionPrompt<string>()
                 .Title("Please select a month?")
                 .PageSize(5)
-                // .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
                 .AddChoices([
                     "Month", "Year", "Hours"
                 ]));

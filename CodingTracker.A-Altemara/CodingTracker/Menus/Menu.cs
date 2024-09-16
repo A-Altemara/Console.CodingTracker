@@ -16,7 +16,7 @@ public static class Menu
         _codingDb = new CodingDb(defaultConnection);
         _goalsDb = new GoalsDb(defaultConnection);
     }
-    
+
     /// <summary>
     /// Displays Session Menu
     /// </summary>
@@ -74,7 +74,7 @@ public static class Menu
             }
         }
     }
-    
+
     /// <summary>
     /// Displays Goals Menu
     /// </summary>
@@ -132,6 +132,7 @@ public static class Menu
                         GoalsMenu.ShowProgressToGoal(codingGoal, sessions);
                         AnsiConsole.WriteLine();
                     }
+
                     AnsiConsole.WriteLine("press enter to continue.");
                     Console.ReadLine();
                     break;
@@ -168,7 +169,7 @@ public static class Menu
 
         return id;
     }
-    
+
     /// <summary>
     /// Deletes a session record from the database.
     /// Prompts the user to select a record to delete.
@@ -278,7 +279,4 @@ public static class Menu
             throw new NotImplementedException();
         }
     }
-    
-    
-
 }

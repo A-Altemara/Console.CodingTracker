@@ -214,8 +214,8 @@ public static class SessionMenu
         AnsiConsole.WriteLine($"You have add a coding session lasting {newSession.Duration}. Press enter to continue");
         Console.ReadLine();
     }
-    
-     /// <summary>
+
+    /// <summary>
     /// Prompts the user to enter a valid time.
     /// </summary>
     /// <returns>The valid time entered by the user, or null if the user exits.</returns>
@@ -284,6 +284,4 @@ public static class SessionMenu
         DateOnly datePart = DateOnly.ParseExact(date, dateFormats);
         return datePart;
     }
-
-   
 }

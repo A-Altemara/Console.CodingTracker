@@ -216,7 +216,7 @@ public class CodingDb : ICodingTrackerDb<CodingSession>
             return false;
         }
     }
-    
+
     public List<CodingSession> GetTotalCodingHours(CodingGoal codingGoal)
     {
         double totalCodingHours = 0;
@@ -224,7 +224,7 @@ public class CodingDb : ICodingTrackerDb<CodingSession>
         var sessions =
             _dbConnection.Query<CodingSession>(
                     $"SELECT * FROM CodeTrackerTable WHERE strftime('%Y-%m', StartTime) = '{codingGoalDate}'")
-            .ToList();
+                .ToList();
         return sessions;
     }
 }
