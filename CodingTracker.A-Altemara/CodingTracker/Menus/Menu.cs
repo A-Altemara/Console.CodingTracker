@@ -91,7 +91,7 @@ public static class Menu
                 .PageSize(5)
                 // .MoreChoicesText("[grey](Move up and down to reveal more options)[/]")
                 .AddChoices([
-                    "Add New Goal", "Edit Existing Goal", "Delete a Goal", "View a goal", "View progress on Goals",
+                    "Add New Goal", "Edit Existing Goal", "Delete a Goal", "View a goal", "View All Goals",
                     "Exit to Main Menu"
                 ]));
         return selection;
@@ -120,10 +120,19 @@ public static class Menu
                     var goal = GoalsMenu.GetGoal(_goalsDb);
                     var sessions = _codingDb.GetTotalCodingHours(goal);
                     GoalsMenu.ShowProgressToGoal(goal, sessions);
+                    AnsiConsole.WriteLine("press enter to continue.");
                     Console.ReadLine();
                     break;
-                case "View progress on Goals":
-                    Console.WriteLine("view progress on goal, press enter to continue");
+                case "View All Goals":
+                    var goals = ViewRecords(_goalsDb);
+                    foreach (var entry in goals)
+                    {
+                        var codingGoal = entry as CodingGoal;
+                        sessions = _codingDb.GetTotalCodingHours(codingGoal);
+                        GoalsMenu.ShowProgressToGoal(codingGoal, sessions);
+                        AnsiConsole.WriteLine();
+                    }
+                    AnsiConsole.WriteLine("press enter to continue.");
                     Console.ReadLine();
                     break;
                 case "Exit to Main Menu":

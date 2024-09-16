@@ -138,31 +138,17 @@ public static class GoalsMenu
 
     public static void ShowProgressToGoal(CodingGoal codingGoal, List<CodingSession> sessions)
     {
-        var totalCodingHours = sessions.Sum(s => s.Duration.TotalHours);
-        if (totalCodingHours == 0)
-        {
-            AnsiConsole.Write(new BreakdownChart()
-                .FullSize()
-                .AddItem("UnMet Goal", Math.Round((double)codingGoal.GoalHours, 2), Color.Red));
-        }
-        else if (codingGoal.GoalHours - totalCodingHours > 0)
-        {
-            AnsiConsole.Write(new BreakdownChart()
-                .FullSize()
-                .AddItem("Progress", totalCodingHours, Color.Green)
-                .AddItem("Goal", Math.Round(codingGoal.GoalHours - totalCodingHours, 2) - totalCodingHours, Color.Red));
-        }
-        else if (codingGoal.GoalHours - totalCodingHours <= 0)
-        {
-            AnsiConsole.Write(new BreakdownChart()
-                .FullSize()
-                .AddItem("Progress", codingGoal.GoalHours, Color.Green)
-                .AddItem("Exceeded Goal", Math.Round(totalCodingHours - codingGoal.GoalHours, 2), Color.Blue));
-        }
-        else
-        {
-            throw new NotImplementedException();
-        }
+        var totalCodingHours = Math.Round(sessions.Sum(s => s.Duration.TotalHours), 2);
+        var currentProgress = Math.Round((double)codingGoal.GoalHours, 2);
+
+        var chart = new BarChart()
+            .Width(100)
+            .Label($"[green bold]Goal Progress: {codingGoal.GoalMonth}, {codingGoal.GoalYear}[/]")
+            .CenterLabel()
+            .AddItem("Current Progress", totalCodingHours, Color.Green)
+            .AddItem("Goal Hours", currentProgress, Color.Red);
+            
+        AnsiConsole.Write(chart);
     }
 
     public static CodingGoal UpdateGoal(CodingGoal goal)
