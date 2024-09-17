@@ -62,7 +62,6 @@ public class CodingDb : ICodingTrackerDb<CodingSession>
             CreateAndPopulateData();
         }
 
-        // Console.WriteLine("Connection Closed");
     }
 
     /// <summary>
@@ -219,7 +218,6 @@ public class CodingDb : ICodingTrackerDb<CodingSession>
 
     public List<CodingSession> GetTotalCodingHours(CodingGoal codingGoal)
     {
-        double totalCodingHours = 0;
         var codingGoalDate = codingGoal.GetFormatedDate();
         var sessions =
             _dbConnection.Query<CodingSession>(

@@ -1,5 +1,3 @@
-using System.Configuration;
-using System.Globalization;
 using CodingTracker.A_Altemara.Models;
 using Spectre.Console;
 

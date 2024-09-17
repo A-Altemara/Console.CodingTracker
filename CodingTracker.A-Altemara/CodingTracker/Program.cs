@@ -1,6 +1,5 @@
 ﻿using CodingTracker.A_Altemara.Menus;
 using Spectre.Console;
-using System.Configuration;
 
 namespace CodingTracker.A_Altemara;
 
@@ -19,7 +18,6 @@ public static class Program
         Menu.Initialize();
         var continueProgram = true;
 
-        // SpectreTest.RunSpectre();
         while (continueProgram)
         {
             Console.Clear();
