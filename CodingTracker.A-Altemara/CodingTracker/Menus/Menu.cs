@@ -152,22 +152,42 @@ public static class Menu
     {
         var sessionIdHash = entries.Select(h => h.Id.ToString()).ToHashSet();
         AnsiConsole.WriteLine("Enter the record ID or E to exit.");
-        var id = Console.ReadLine()?.ToLower();
-
-        while (string.IsNullOrWhiteSpace(id) || !sessionIdHash.Contains(id) || id == "e")
+        string? id;
+        do
         {
-            if (id == "e")
-            {
-                AnsiConsole.WriteLine("Exiting to main menu, press enter to continue");
-                Console.ReadLine();
-                return null;
-            }
-
-            AnsiConsole.WriteLine("Invalid entry, please try again or press E to exit");
             id = Console.ReadLine()?.ToLower();
+        } while (!IsValidId(id, sessionIdHash));
+
+        if (id == "e")
+        {
+            AnsiConsole.WriteLine("Exiting to main menu, press enter to continue");
+            Console.ReadLine();
+            return null;
+        }
+        
+        return id;
+    }
+
+    public static bool IsValidId(string? id, HashSet<string> sessionIdHash)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            AnsiConsole.WriteLine("Invalid entry, please try again or press E to exit");
+            return false;
         }
 
-        return id;
+        if (id == "e")
+        {
+            return true;
+        }
+        
+        if (!sessionIdHash.Contains(id))
+        {
+            AnsiConsole.WriteLine("Invalid entry, please try again or press E to exit");
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>
