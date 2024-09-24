@@ -59,13 +59,24 @@ public static class GoalsMenu
         while (selection < 1)
         {
             selection = AnsiConsole.Ask<int>("Please enter a number of hours for your goal");
-            if (selection < 1)
+            if (!GetHours(selection))
             {
                 Console.WriteLine("Invalid number of hours, please try again.");
             }
         }
 
         return selection;
+    }
+
+    public static bool GetHours(int selection)
+    {
+        
+        if (selection < 1)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>

@@ -222,20 +222,7 @@ public static class SessionMenu
     private static TimeOnly? GetValidTime()
     {
         var timePrompt = new TextPrompt<string>("Enter the time to log (HH:mm) or 'e' to Exit: ")
-            .Validate(input =>
-            {
-                if (input.Equals("e", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    return ValidationResult.Success();
-                }
-
-                if (TimeOnly.TryParse(input, out TimeOnly time))
-                {
-                    return ValidationResult.Success();
-                }
-
-                return ValidationResult.Error("Invalid time format");
-            });
+            .Validate(input => { return ValidateTimeOrExit(input); });
 
         string time = AnsiConsole.Prompt(timePrompt);
 
@@ -248,6 +235,21 @@ public static class SessionMenu
         return timePart;
     }
 
+    public static ValidationResult ValidateTimeOrExit(string input)
+    {
+        if (input.Equals("e", StringComparison.CurrentCultureIgnoreCase))
+        {
+            return ValidationResult.Success();
+        }
+
+        if (TimeOnly.TryParse(input, out TimeOnly time))
+        {
+            return ValidationResult.Success();
+        }
+
+        return ValidationResult.Error("Invalid time format");
+    }
+
     /// <summary>
     /// Prompts the user to enter a valid date.
     /// </summary>
@@ -258,21 +260,7 @@ public static class SessionMenu
         string[] dateFormats = ["MM-dd-yyyy", "dd-MM-yyyy", "yyyy-MM-dd"];
 
         var datePrompt = new TextPrompt<string>("Enter the Date to log (YYYY-MM-DD) or 'e' to exit: ")
-            .Validate(input =>
-            {
-                if (input.Equals("e", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    return ValidationResult.Success();
-                }
-
-                if (DateTime.TryParseExact(input, dateFormats, null, System.Globalization.DateTimeStyles.None,
-                        out DateTime date))
-                {
-                    return ValidationResult.Success();
-                }
-
-                return ValidationResult.Error("Invalid date format");
-            });
+            .Validate(input => { return ValidateDateOrExit(input, dateFormats); });
 
         string date = AnsiConsole.Prompt(datePrompt);
 
@@ -283,5 +271,21 @@ public static class SessionMenu
 
         DateOnly datePart = DateOnly.ParseExact(date, dateFormats);
         return datePart;
+    }
+
+    public static ValidationResult ValidateDateOrExit(string input, string[] dateFormats)
+    {
+        if (input.Equals("e", StringComparison.CurrentCultureIgnoreCase))
+        {
+            return ValidationResult.Success();
+        }
+
+        if (DateTime.TryParseExact(input, dateFormats, null, System.Globalization.DateTimeStyles.None,
+                out DateTime date))
+        {
+            return ValidationResult.Success();
+        }
+
+        return ValidationResult.Error("Invalid date format");
     }
 }
