@@ -168,6 +168,11 @@ public static class Menu
         return id;
     }
 
+    /// <summary>
+    /// Verifies session ID provided by user from the provided collection of entries.
+    /// </summary>
+    /// <param name="sessionIdHash">A hashset of entry records to validate against.</param>
+    /// <returns>The true if valid entry ID was entered by the user, false if ID is invalid, or null if the user exits.</returns>
     public static bool IsValidId(string? id, HashSet<string> sessionIdHash)
     {
         if (string.IsNullOrWhiteSpace(id))

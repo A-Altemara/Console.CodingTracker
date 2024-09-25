@@ -71,12 +71,12 @@ public class CodingDb : ICodingTrackerDb<CodingSession>
     {
         string insertQuery =
             "INSERT INTO CodeTrackerTable (StartTime, EndTime, Duration) VALUES (@StartTime, @EndTime, @Duration);";
-        int counter = 10;
+        int counter = 50;
         while (counter > 0)
 
         {
             var randomStart =
-                GenerateRandomStartDateTime(new DateTime(2022, 1, 1), new DateTime(2024, 7, 31));
+                GenerateRandomStartDateTime(new DateTime(2023, 1, 1), DateTime.Now);
             var randomEnd = GenerateRandomEndDateTime(randomStart, 0);
             var duration = CalculateDuration(randomStart, randomEnd);
             var entry = new CodingSession

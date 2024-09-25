@@ -235,6 +235,10 @@ public static class SessionMenu
         return timePart;
     }
 
+    /// <summary>
+    /// Verifies the user entered time.
+    /// </summary>
+    /// <returns>The Success for valid or Error invalid time entered by the user.</returns>
     public static ValidationResult ValidateTimeOrExit(string input)
     {
         if (input.Equals("e", StringComparison.CurrentCultureIgnoreCase))
@@ -273,6 +277,10 @@ public static class SessionMenu
         return datePart;
     }
 
+    /// <summary>
+    /// Verifies the user entered Date.
+    /// </summary>
+    /// <returns>The Success for valid or Error invalid date entered by the user.</returns>
     public static ValidationResult ValidateDateOrExit(string input, string[] dateFormats)
     {
         if (input.Equals("e", StringComparison.CurrentCultureIgnoreCase))

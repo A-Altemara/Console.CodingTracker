@@ -59,12 +59,27 @@ public class GoalsDb : ICodingTrackerDb<CodingGoal>
                 command.ExecuteNonQuery();
             }
 
-            string goalName = "September";
-            int goalYear = 2024;
-            int goalHours = 1;
+            CreateAndPopulateData();
+        }
+    }
+
+    /// <summary>
+    /// Generates random data and populates the "GoalsTrackerTable" table with pre-populated data.
+    /// </summary>
+    private void CreateAndPopulateData()
+    {
+        string[] monthsOfTheYear =
+        [
+            "January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+            "November", "December"
+        ];
+        foreach (var goalMonth in monthsOfTheYear)
+        {
+            var goalYear = Random.Next(DateTime.Now.Year, DateTime.Now.Year);
+            var goalHours = Random.Next(1,16);
 
             string insertQuery =
-                $"INSERT INTO GoalsTrackerTable (GoalMonth, GoalYear, GoalHours) VALUES ('{goalName}','{goalYear}', '{goalHours}')";
+                $"INSERT INTO GoalsTrackerTable (GoalMonth, GoalYear, GoalHours) VALUES ('{goalMonth}','{goalYear}', '{goalHours}')";
             using (SQLiteCommand command = new(insertQuery, _dbConnection))
             {
                 command.ExecuteNonQuery();

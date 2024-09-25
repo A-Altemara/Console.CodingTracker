@@ -50,7 +50,7 @@ public static class GoalsMenu
 
     /// <summary>
     /// Asks the user to input a valid number of hours for a goal. 
-    /// The input is validated to ensure it is a positive integer.
+    /// Calls GetHours to validate entry as positive integer.
     /// </summary>
     /// <returns>An integer representing the valid number of hours.</returns>
     private static int GetValidHours()
@@ -68,6 +68,11 @@ public static class GoalsMenu
         return selection;
     }
 
+    /// <summary>
+    /// Verifies the user input is valid for parameter. 
+    /// The input is validated to ensure it is a positive integer.
+    /// </summary>
+    /// <returns>A bool representing receipt of a valid number for hours.</returns>
     public static bool GetHours(int selection)
     {
         
@@ -105,7 +110,7 @@ public static class GoalsMenu
             validEntry = int.TryParse(selection, out year);
             if (!validEntry)
             {
-                Console.WriteLine("Invalid Entry, Please try again");
+                AnsiConsole.WriteLine("Invalid Entry, Please try again");
             }
         }
 

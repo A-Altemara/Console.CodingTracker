@@ -49,9 +49,3 @@ public static class Program
         }
     }
 }
-
-// Stretch Goals
-//"Start new Coding session", 
-// "End Coding session",
-// with the ongoing session can you do other things in the meantime or will it just default to end session.
-// maybe leave the end session as first option if stopwatch is running, then can add other sessions.
