@@ -118,6 +118,11 @@ public static class Menu
                     break;
                 case "View a goal":
                     var goal = GoalsMenu.GetGoal(_goalsDb);
+                    if (goal == null)
+                    {
+                        AnsiConsole.WriteLine("Exiting view a goal");
+                        continue;
+                    }
                     var sessions = _codingDb.GetTotalCodingHours(goal);
                     GoalsMenu.ShowProgressToGoal(goal, sessions);
                     AnsiConsole.WriteLine("press enter to continue.");
@@ -160,7 +165,7 @@ public static class Menu
 
         if (id == "e")
         {
-            AnsiConsole.WriteLine("Exiting to main menu, press enter to continue");
+            AnsiConsole.WriteLine("Exiting to menu, press enter to continue");
             Console.ReadLine();
             return null;
         }
